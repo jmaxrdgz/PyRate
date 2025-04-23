@@ -3,11 +3,13 @@ PyRate is a top-down 2D naval battle game where you command pirate ships in tact
 
 # Installation & Launch
   
+Clone the repo  
+```git clone https://github.com/your-username/pyrate.git```  
+```cd pyrate``` 
+
 Create virtual environment  
-```conda create -n pyrate python=3.11```  
-  
-Activate it  
-```conda activate pyrate```
+```conda env create -f environment.yml```  
+```conda activate pyrate```   
   
 Launch the game  
 ```python -m pyrate.main```
