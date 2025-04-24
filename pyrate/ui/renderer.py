@@ -39,11 +39,15 @@ def run_game():
             # Zone d’agro (transparente)
             pygame.draw.circle(overlay, (0, 255, 0, 40), (ex, ey), radius)
             # Ennemis
-            pygame.draw.circle(screen, (0, 255, 0), (ex, ey), 15)
+            pygame.draw.circle(screen, (255, 0, 0), (ex, ey), 15)
+
+        # Projectiles
+        for projectile in game.player_ship.projectiles:
+            pygame.draw.circle(screen, (0, 0, 0), (int(projectile.x), int(projectile.y)), projectile.radius)
+
 
         screen.blit(overlay, (0, 0))
 
-        # flip() the display to put your work on screen
         pygame.display.flip()
         clock.tick(FPS)
 
