@@ -7,6 +7,7 @@ def handle_input(ship):
     """
     keys = pygame.key.get_pressed()
 
+    # Displacement
     if keys[pygame.K_z]:
         ship.accelerate()
     if keys[pygame.K_s]:
@@ -15,3 +16,9 @@ def handle_input(ship):
         ship.turn_left()
     if keys[pygame.K_d]:
         ship.turn_right()
+    
+    # Shooting
+    if keys[pygame.K_LEFT]:
+        ship.fire("left")
+    if keys[pygame.K_RIGHT]:
+        ship.fire("right")
