@@ -1,22 +1,50 @@
 import pygame
 from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
+from pyrate.engine.game import Game
 
 def run_game():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
+    game = Game()
+
+    overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+
     running = True
 
     while running:
+        # Close window if x is pressed
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-        screen.fill("purple")  # Clear the screen
+        #===================#
+        #   ENGINE UPDATE   #
+        #===================#
+        game.update()
 
-        # TODO: RENDER YOUR GAME HERE
+        #============#
+        #   RENDER   #
+        #============#
+        # fill the screen with a color to wipe away anything from last frame
+        screen.fill("blue")
+        overlay.fill((0, 0, 0, 0))
 
-        pygame.display.flip()  # Update the display
-        clock.tick(FPS)        # Limit FPS
+        # Player
+        x, y = game.get_player_position()
+        pygame.draw.circle(screen, (0, 255, 0), (x, y), 15)
+
+        # Enemies
+        for ex, ey, radius in game.get_enemies_positions():
+            # Zone d’agro (transparente)
+            pygame.draw.circle(overlay, (0, 255, 0, 40), (ex, ey), radius)
+            # Ennemis
+            pygame.draw.circle(screen, (0, 255, 0), (ex, ey), 15)
+
+        screen.blit(overlay, (0, 0))
+
+        # flip() the display to put your work on screen
+        pygame.display.flip()
+        clock.tick(FPS)
 
     pygame.quit()
