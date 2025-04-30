@@ -72,7 +72,7 @@ class Ship:
 
         self.projectiles.append(Cannonball(x, y, cannon_angle))
     
-    def damage(self, amount):
+    def apply_damage(self, amount):
         self.health = max(self.health - amount, 0)
         if self.health == 0:
             self.is_living = False
