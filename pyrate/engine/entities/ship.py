@@ -16,7 +16,7 @@ class Ship(Entity):
         self.max_speed = 2
         self.acceleration = 0.2
         self.rotation_speed = 3
-        self.friction = 0.05
+        self.friction = 0.04
 
         # Projectile
         self.projectiles = []
@@ -26,8 +26,8 @@ class Ship(Entity):
         # Gameplay
         self.health = 100
         self.is_living = True
-        self.width = 50 # temp!
-        self.height = 20 # temp!
+        self.height = 100 # temp!
+        self.width = 40 # temp!
 
 
     def update(self):
@@ -48,7 +48,7 @@ class Ship(Entity):
         Retourne la liste des sommets (x, y) du rectangle
         centrée sur (self.x, self.y), tourné de self.angle degrés.
         """
-        hw, hh = self.width / 2, self.height / 2
+        hw, hh = self.height / 2, self.width / 2
         # définition des coins avant rotation
         corners = [
             (-hw, -hh),
@@ -78,11 +78,13 @@ class Ship(Entity):
 
 
     def turn_left(self):
-        self.angle -= self.rotation_speed
+        if self.speed > 0.1:
+            self.angle -= self.rotation_speed
 
 
     def turn_right(self):
-        self.angle += self.rotation_speed
+        if self.speed > 0.1:
+            self.angle += self.rotation_speed
 
 
     def fire(self, side="left"):
