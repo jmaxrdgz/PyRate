@@ -1,12 +1,13 @@
 # pyrate/engine/projectile.py
 import math
 
-class Cannonball:
+from pyrate.engine.entities.entity import Entity
+
+class Cannonball(Entity):
     def __init__(self, x, y, angle, speed=8, max_distance=600):
-        self.x = x
-        self.y = y
-        self.start_x = x
-        self.start_y = y
+        super().__init__(x, y, name="Cannonball")
+        self.start_x = self.x
+        self.start_y = self.y
         self.angle = angle
         self.speed = speed
         self.radius = 5

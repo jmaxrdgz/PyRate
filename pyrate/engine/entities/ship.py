@@ -2,14 +2,15 @@
 import math
 import time
 
-from pyrate.engine.projectile import Cannonball
+from pyrate.engine.entities.entity import Entity
+from pyrate.engine.entities.projectile import Cannonball
 
-class Ship:
+class Ship(Entity):
 
     def __init__(self, x, y):
+        super().__init__(x, y, name="Player ship")
         # Displacement
-        self.x = x
-        self.y = y
+        super().__init__(x, y, name="Ship")
         self.angle = 0      # en degrés
         self.speed = 0
         self.max_speed = 2
@@ -25,6 +26,8 @@ class Ship:
         # Gameplay
         self.health = 100
         self.is_living = True
+        self.width = 50 # temp!
+        self.height = 20 # temp!
 
 
     def update(self):
@@ -38,6 +41,32 @@ class Ship:
         rad = math.radians(self.angle)
         self.x += self.speed * math.cos(rad)
         self.y += self.speed * math.sin(rad)
+
+
+    def get_hitbox(self):
+        """
+        Retourne la liste des sommets (x, y) du rectangle
+        centrée sur (self.x, self.y), tourné de self.angle degrés.
+        """
+        hw, hh = self.width / 2, self.height / 2
+        # définition des coins avant rotation
+        corners = [
+            (-hw, -hh),
+            ( hw, -hh),
+            ( hw,  hh),
+            (-hw,  hh),
+        ]
+        rad = math.radians(self.angle)
+        cos_a, sin_a = math.cos(rad), math.sin(rad)
+
+        hitbox = []
+        for dx, dy in corners:
+            # rotation puis translation
+            rx = dx * cos_a - dy * sin_a
+            ry = dx * sin_a + dy * cos_a
+            hitbox.append((self.x + rx, self.y + ry))
+
+        return hitbox
 
 
     def accelerate(self):
