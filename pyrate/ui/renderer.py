@@ -1,6 +1,9 @@
+# pyrate/ui/renderer.py
 import pygame
-from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
+import math
+from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, DEBUG_MODE
 from pyrate.engine.game import Game
+
 
 def run_game():
     pygame.init()
@@ -8,9 +11,11 @@ def run_game():
     clock = pygame.time.Clock()
     game = Game()
 
+    # semi-transparent overlay for debug drawings
     overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
 
     running = True
+    debug = DEBUG_MODE
 
     while running:
         # Close window if x is pressed
@@ -26,29 +31,55 @@ def run_game():
         #============#
         #   RENDER   #
         #============#
-        # fill the screen with a color to wipe away anything from last frame
         screen.fill("blue")
-        overlay.fill((0, 0, 0, 0))
+        if debug:
+            overlay.fill((0, 0, 0, 0))  # clear debug overlay
 
-        # Player
-        x, y = game.get_player_position()
-        pygame.draw.circle(screen, (0, 255, 0), (x, y), 15)
+        # Draw player ship (with debug hitbox)
+        draw_ship(screen, game.player_ship, role='player', debug=debug)
 
-        # Enemies
-        for ex, ey, radius in game.get_enemies_positions():
-            # Zone d’agro (transparente)
-            pygame.draw.circle(overlay, (0, 255, 0, 40), (ex, ey), radius)
-            # Ennemis
-            pygame.draw.circle(screen, (255, 0, 0), (ex, ey), 15)
+        # Draw enemies and optional debug agro zones
+        for enemy in game.enemies:
+            if debug:
+                # agro zone
+                pygame.draw.circle(overlay, (0, 255, 0, 40), (int(enemy.x), int(enemy.y)), enemy.agro_radius)
+            draw_ship(screen, enemy, role='enemy', debug=debug)
 
-        # Projectiles
-        for projectile in game.player_ship.projectiles:
+        # Draw projectiles (and debug hitbox as circle)
+        for projectile in game.projectiles:
+            # actual projectile
             pygame.draw.circle(screen, (0, 0, 0), (int(projectile.x), int(projectile.y)), projectile.radius)
+            if debug:
+                # hitbox circle
+                pygame.draw.circle(overlay, (255, 255, 255, 80), (int(projectile.x), int(projectile.y)), projectile.radius, width=1)
 
-
-        screen.blit(overlay, (0, 0))
+        # Blit debug overlay
+        if debug:
+            screen.blit(overlay, (0, 0))
 
         pygame.display.flip()
         clock.tick(FPS)
 
     pygame.quit()
+
+
+def draw_ship(screen, ship, role, debug=False):
+    # Draw the ship as a triangle
+    if role == 'player':
+        color = (0, 255, 0)
+    elif role == 'enemy':
+        color = (255, 0, 0)
+    points = [
+        (ship.x + math.cos(math.radians(ship.angle)) * 15,
+         ship.y + math.sin(math.radians(ship.angle)) * 15),
+        (ship.x + math.cos(math.radians(ship.angle + 140)) * 15,
+         ship.y + math.sin(math.radians(ship.angle + 140)) * 15),
+        (ship.x + math.cos(math.radians(ship.angle - 140)) * 15,
+         ship.y + math.sin(math.radians(ship.angle - 140)) * 15),
+    ]
+    pygame.draw.polygon(screen, color, points)
+
+    if debug:
+        # draw hitbox polygon
+        hitbox = ship.get_hitbox()
+        pygame.draw.polygon(overlay if False else screen, (255, 255, 255), hitbox, width=1)

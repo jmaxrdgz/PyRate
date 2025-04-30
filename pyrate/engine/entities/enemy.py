@@ -1,11 +1,12 @@
 # pyrate/engine/enemy.py
-from pyrate.engine.ship import Ship
+from pyrate.engine.entities.ship import Ship
 import math, random
 
 class EnemyShip(Ship):
-    def __init__(self, x, y, agro_radius=300, preferred_distance=200, patrol_radius=400):
+    def __init__(self, x, y, agro_radius=150, preferred_distance=100, patrol_radius=400):
         super().__init__(x, y)
         # point d’ancrage et zones
+        self.name = "Enemy ship"
         self.anchor_x = x
         self.anchor_y = y
         self.agro_radius = agro_radius
