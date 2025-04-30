@@ -71,9 +71,8 @@ class Game:
         for projectile in self.projectiles:
             for target in [self.player_ship] + self.enemies:
                 if self.collide(projectile, target):
-                    damage = self.compute_damage(projectile, target)
-                    target.apply_damage(damage)
-                    print(f"{target.name} took {damage} damage, health remaining {target.health}")
+                    target.apply_damage(projectile.damage)
+                    print(f"{target.name} took {projectile.damage} damage, health remaining {target.health}")
                     collisions.append(projectile)
         # remove collided projectiles
         self.projectiles = [p for p in self.projectiles if p not in collisions]

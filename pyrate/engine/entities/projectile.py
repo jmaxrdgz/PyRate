@@ -12,6 +12,7 @@ class Cannonball(Entity):
         self.speed = speed
         self.radius = 5
         self.max_distance = max_distance
+        self.damage = 30
 
     def update(self):
         rad = math.radians(self.angle)
