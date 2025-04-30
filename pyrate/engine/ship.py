@@ -12,7 +12,7 @@ class Ship:
         self.y = y
         self.angle = 0      # en degrés
         self.speed = 0
-        self.max_speed = 5
+        self.max_speed = 2
         self.acceleration = 0.2
         self.rotation_speed = 3
         self.friction = 0.05
@@ -21,6 +21,10 @@ class Ship:
         self.projectiles = []
         self.last_fire_time = {"left": 0, "right": 0}
         self.cooldown = 4.0
+
+        # Gameplay
+        self.health = 100
+        self.is_living = True
 
 
     def update(self):
@@ -34,14 +38,6 @@ class Ship:
         rad = math.radians(self.angle)
         self.x += self.speed * math.cos(rad)
         self.y += self.speed * math.sin(rad)
-
-        # Update projectiles
-        new_projectiles = []
-        for p in self.projectiles:
-            p.update()
-            if not p.has_exceeded_range():
-                new_projectiles.append(p)
-        self.projectiles = new_projectiles
 
 
     def accelerate(self):
@@ -75,3 +71,16 @@ class Ship:
         y = self.y + math.sin(offset_rad) * 20
 
         self.projectiles.append(Cannonball(x, y, cannon_angle))
+    
+    def damage(self, amount):
+        self.health = max(self.health - amount, 0)
+        if self.health == 0:
+            self.is_living = False
+            self.on_destroy()
+
+
+    def on_destroy(self):
+        # Handle ship destruction logic here
+        pass
+
+    
