@@ -22,3 +22,16 @@ class Cannonball(Entity):
         dx = self.x - self.start_x
         dy = self.y - self.start_y
         return math.hypot(dx, dy) > self.max_distance
+    
+
+    def get_hitbox(self):
+        return [
+            (self.x - self.radius, self.y - self.radius),
+            (self.x + self.radius, self.y - self.radius),
+            (self.x + self.radius, self.y + self.radius),
+            (self.x - self.radius, self.y + self.radius),
+        ]
+    
+
+    def apply_damage(self, target):
+        pass
