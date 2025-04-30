@@ -11,7 +11,7 @@ class Ship(Entity):
         super().__init__(x, y, name="Player ship")
         # Displacement
         super().__init__(x, y, name="Ship")
-        self.angle = 0      # en degrés
+        self.angle = 0 # degrees
         self.speed = 0
         self.max_speed = 2
         self.acceleration = 0.2
@@ -100,16 +100,17 @@ class Ship(Entity):
         y = self.y + math.sin(offset_rad) * 20
 
         self.projectiles.append(Cannonball(x, y, cannon_angle))
-    
+
+
     def apply_damage(self, amount):
         self.health = max(self.health - amount, 0)
         if self.health == 0:
-            self.is_living = False
             self.on_destroy()
 
 
     def on_destroy(self):
-        # Handle ship destruction logic here
+        self.is_living = False
+        # TODO: handle ship destruction (e.g. explosion, game over)
         pass
 
     
