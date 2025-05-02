@@ -18,8 +18,8 @@ class Ship(Entity):
 
         # Rotation inertia
         self.rotation_velocity = 0
-        self.rotation_acceleration = 0.5
-        self.rotation_max_speed = 3
+        self.rotation_acceleration = 0.3
+        self.rotation_max_speed = 2
         self.rotation_friction = 0.1
 
         # Projectile
@@ -95,11 +95,13 @@ class Ship(Entity):
 
 
     def turn_left(self):
-        self.rotation_velocity = max(self.rotation_velocity - self.rotation_acceleration, -self.rotation_max_speed)
+        if self.speed > 0.1:
+            self.rotation_velocity = max(self.rotation_velocity - self.rotation_acceleration, -self.rotation_max_speed)
 
 
     def turn_right(self):
-        self.rotation_velocity = min(self.rotation_velocity + self.rotation_acceleration, self.rotation_max_speed)
+        if self.speed > 0.1:
+            self.rotation_velocity = min(self.rotation_velocity + self.rotation_acceleration, self.rotation_max_speed)
 
 
     def fire(self, side="left"):
