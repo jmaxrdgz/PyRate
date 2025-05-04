@@ -70,6 +70,20 @@ def run_game():
 
         # Draw animated effects
         active_effects = []
+
+        for impact in game.impacts:
+            if impact[1] == "hit":
+                # Draw explosion effect
+                explosion_effect = AnimatedEffect(explosion_frames, (impact[0].x, impact[0].y), duration=1500)
+                active_effects.append(explosion_effect)
+                print("Hit effect added") # temp!
+            elif impact[1] == "miss":
+                # Draw splash effect
+                splash_effect = AnimatedEffect(splash_frames, (impact[0].x, impact[0].y), duration=1500)
+                active_effects.append(splash_effect)
+                print("Splash effect added") # temp!
+            game.impacts.pop(0) # Remove the impact after processing
+
         for effect in active_effects[:]:
             effect.update()
             if effect.finished:
@@ -107,6 +121,7 @@ def draw_entity(screen, entity, sprite, debug=False):
         pygame.draw.polygon(screen, (255,255,255), hitbox, width=1)
 
 
+# TODO: Add size factor choice (for explosions)
 def draw_rotated(screen, image, x, y, angle):
     """
     Rotate an image and blit it centered at (x,y).

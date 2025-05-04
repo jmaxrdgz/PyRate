@@ -24,6 +24,7 @@ class Game:
 
         # projectiles memory
         self.projectiles = []
+        self.impacts = []
 
         # enemies list
         self.enemies = []
@@ -60,6 +61,8 @@ class Game:
             projectile.update()
             if not projectile.has_exceeded_range():
                 remaining_projectiles.append(projectile)
+            else:
+                self.impacts.append((projectile, "miss"))
         self.projectiles = remaining_projectiles
 
         # handle collisions & damage
@@ -74,6 +77,7 @@ class Game:
                     target.apply_damage(projectile.damage)
                     print(f"{target.name} took {projectile.damage} damage, health remaining {target.health}")
                     collisions.append(projectile)
+                    self.impacts.append((projectile, "hit"))
         # remove collided projectiles
         self.projectiles = [p for p in self.projectiles if p not in collisions]
 
