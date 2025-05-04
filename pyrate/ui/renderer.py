@@ -3,6 +3,7 @@ import pygame
 import math
 from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, DEBUG_MODE
 from pyrate.engine.game import Game
+from pyrate.ui.animation import AnimatedEffect
 
 
 def run_game():
@@ -12,13 +13,11 @@ def run_game():
     game = Game()
 
     # Load assets
-    # Sea texture (tileable)
     # sea_tex = pygame.image.load("assets/images/sea_tile.png").convert()
-    # Player and enemy sprites
-    player_img = pygame.image.load("assets/images/player_full_health.png").convert_alpha()
-    enemy_img = pygame.image.load("assets/images/enemy_full_health.png").convert_alpha()
-    # Cannonball sprite
-    # cannon_img = pygame.image.load("assets/images/cannonball.png").convert_alpha()
+    splash_frames = load_frames(['assets/images/splash1.png', 'assets/images/splash2.png', 'assets/images/splash3.png', 'assets/images/splash4.png'])
+    explosion_frames = load_frames(['assets/images/explosion1.png', 'assets/images/explosion2.png', 'assets/images/explosion3.png'])
+    player_frames = load_frames(['assets/images/player_full.png', 'assets/images/player_damaged1.png', 'assets/images/player_damaged2.png'])
+    enemy_frames = load_frames(['assets/images/enemy_full.png', 'assets/images/enemy_damaged1.png', 'assets/images/enemy_damaged2.png'])
 
     # semi-transparent overlay for debug drawings
     overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
@@ -53,13 +52,13 @@ def run_game():
             overlay.fill((0, 0, 0, 0))  # clear debug overlay
 
         # Draw player ship
-        draw_entity(screen, game.player_ship, player_img, debug)
+        draw_ship(screen, game.player_ship, player_frames, debug)
 
         # Draw enemies and agro zones
         for enemy in game.enemies:
             if debug:
                 pygame.draw.circle(overlay, (0,255,0,40), (int(enemy.x), int(enemy.y)), enemy.agro_radius)
-            draw_entity(screen, enemy, enemy_img, debug)
+            draw_ship(screen, enemy, enemy_frames, debug)
 
         # Draw projectiles
         for projectile in game.projectiles:
@@ -68,6 +67,15 @@ def run_game():
             if debug:
                 # hitbox circle
                 pygame.draw.circle(overlay, (255,255,255,80), (int(projectile.x), int(projectile.y)), projectile.radius, width=1)
+
+        # Draw animated effects
+        active_effects = []
+        for effect in active_effects[:]:
+            effect.update()
+            if effect.finished:
+                active_effects.remove(effect)
+        for effect in active_effects:
+            effect.draw(screen)
 
         # Blit debug overlay
         if debug:
@@ -78,6 +86,15 @@ def run_game():
 
     pygame.quit()
 
+
+def draw_ship(screen, ship, frames, debug=False):
+    if ship.health >= 50 and ship.is_living:
+        sprite = frames[0]
+    if ship.health > 20 and ship.is_living:
+        sprite = frames[1]
+    if ship.health <= 20 and ship.is_living:
+        sprite = frames[2]
+    draw_entity(screen, ship, sprite, debug)
 
 def draw_entity(screen, entity, sprite, debug=False):
     """
@@ -97,3 +114,40 @@ def draw_rotated(screen, image, x, y, angle):
     rotated = pygame.transform.rotate(image, -angle + 90)
     rect = rotated.get_rect(center=(int(x), int(y)))
     screen.blit(rotated, rect)
+
+def load_frames(path_list):
+    """
+    Load frames in a list.
+    """
+    try:
+        frames = [pygame.image.load(path).convert_alpha() for path in path_list]
+    except pygame.error as e:
+        print(f"Error loading frames: {e}")
+        frames = []
+    return frames
+
+
+
+
+
+
+
+
+
+
+
+# # When a cannonball hits the sea
+# splash_effect = AnimatedEffect(splash_frames, (x, y), duration=500)
+# active_effects.append(splash_effect)
+
+# # When a cannonball hits a ship
+# explosion_effect = AnimatedEffect(explosion_frames, (x, y), duration=300)
+# active_effects.append(explosion_effect)
+
+# # When a ship moves forward
+# water_displacement_effect = AnimatedEffect(water_displacement_frames, (x, y), duration=400, loop=True)
+# active_effects.append(water_displacement_effect)
+
+# # When a ship's health decreases
+# damage_level = int((1 - ship.health / ship.max_health) * (len(damage_frames) - 1))
+# ship_image = damage_frames[damage_level]
