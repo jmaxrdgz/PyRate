@@ -1,22 +1,21 @@
 # pyrate/engine/input.py
 import pygame
+from pyrate.settings import INPUT_MODE
 
-PLAYER_CONTROL = "human"  # Valeurs possibles: "human" ou "bot"
 
 def set_player_control(control_type):
-    global PLAYER_CONTROL
-    if control_type in ["human", "bot"]:
+    global INPUT_MODE
+    if control_type in ["keyboard", "api"]:
         PLAYER_CONTROL = control_type
-        print(f"[Input] Player control set to: {PLAYER_CONTROL}")
+        print(f"[Input] Player controle set to: {PLAYER_CONTROL}")
     else:
-        print(f"[Input] Warning: Unknown control type '{control_type}'. Control remains '{PLAYER_CONTROL}'.")
+        print(f"[Input] Warning: Unknown controle type '{control_type}'")
 
 def handle_input(ship):
     """
-    Allows to control a ship using the keyboard (Z, Q, S, D) when PLAYER_CONTROL is "human".
+    Allows to control a ship using the keyboard (Z, Q, S, D) when INPUT_MODE is "keyboard".
     """
-    global PLAYER_CONTROL
-    if PLAYER_CONTROL == "human":
+    if INPUT_MODE == "keyboard":
         keys = pygame.key.get_pressed()
 
         # Displacement
@@ -34,5 +33,3 @@ def handle_input(ship):
             ship.fire("left")
         if keys[pygame.K_RIGHT]:
             ship.fire("right")
-    # Si PLAYER_CONTROL est "bot", cette fonction ne fera rien.
-    # Le contrôle du bot sera géré par l'API.
