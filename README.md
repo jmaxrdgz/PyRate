@@ -13,7 +13,7 @@ Enemy ships have a patrol zone where they randomly move. If the player enters th
   
 ### Clone the repo  
 ```
-git clone https://github.com/jmaxrdgz/pyrate.git 
+git clone https://github.com/jmaxrdgz/PyRate.git
 cd pyrate
 ``` 
 
