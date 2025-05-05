@@ -8,15 +8,19 @@ from pyrate.engine.entities.projectile import Cannonball
 class Ship(Entity):
 
     def __init__(self, x, y):
-        super().__init__(x, y, name="Player ship")
-        # Displacement
         super().__init__(x, y, name="Ship")
-        self.angle = 0 # degrees
+        # Displacement
+        self.angle = 0  # degrees
         self.speed = 0
         self.max_speed = 2
-        self.acceleration = 0.2
-        self.rotation_speed = 3
-        self.friction = 0.05
+        self.acceleration = 0.1
+        self.friction = 0.04
+
+        # Rotation inertia
+        self.rotation_velocity = 0
+        self.rotation_acceleration = 0.3
+        self.rotation_max_speed = 2
+        self.rotation_friction = 0.1
 
         # Projectile
         self.projectiles = []
@@ -26,18 +30,31 @@ class Ship(Entity):
         # Gameplay
         self.health = 100
         self.is_living = True
-        self.width = 50 # temp!
-        self.height = 20 # temp!
+        self.height = 100
+        self.width = 40
 
 
     def update(self):
-        # Appliquer la friction
+        # Apply friction to linear speed
         if self.speed > 0:
             self.speed -= self.friction
+            self.speed = max(self.speed, 0)
         elif self.speed < 0:
             self.speed += self.friction
+            self.speed = min(self.speed, 0)
 
-        # Calcul du déplacement
+        # Apply friction to rotation
+        if self.rotation_velocity > 0:
+            self.rotation_velocity -= self.rotation_friction
+            self.rotation_velocity = max(self.rotation_velocity, 0)
+        elif self.rotation_velocity < 0:
+            self.rotation_velocity += self.rotation_friction
+            self.rotation_velocity = min(self.rotation_velocity, 0)
+
+        # Apply rotation
+        self.angle += self.rotation_velocity
+
+        # Apply displacement
         rad = math.radians(self.angle)
         self.x += self.speed * math.cos(rad)
         self.y += self.speed * math.sin(rad)
@@ -48,7 +65,7 @@ class Ship(Entity):
         Retourne la liste des sommets (x, y) du rectangle
         centrée sur (self.x, self.y), tourné de self.angle degrés.
         """
-        hw, hh = self.width / 2, self.height / 2
+        hw, hh = self.height / 2, self.width / 2
         # définition des coins avant rotation
         corners = [
             (-hw, -hh),
@@ -78,11 +95,13 @@ class Ship(Entity):
 
 
     def turn_left(self):
-        self.angle -= self.rotation_speed
+        if self.speed > 0.1:
+            self.rotation_velocity = max(self.rotation_velocity - self.rotation_acceleration, -self.rotation_max_speed)
 
 
     def turn_right(self):
-        self.angle += self.rotation_speed
+        if self.speed > 0.1:
+            self.rotation_velocity = min(self.rotation_velocity + self.rotation_acceleration, self.rotation_max_speed)
 
 
     def fire(self, side="left"):
@@ -110,7 +129,4 @@ class Ship(Entity):
 
     def on_destroy(self):
         self.is_living = False
-        # TODO: handle ship destruction (e.g. explosion, game over)
         pass
-
-    
