@@ -13,7 +13,7 @@ def run_game():
     game = Game()
 
     # Load assets
-    # sea_tex = pygame.image.load("assets/images/sea_tile.png").convert()
+    sea_tex = pygame.image.load("assets/images/sea_tile.png").convert()
     splash_frames = load_frames(['assets/images/splash1.png', 'assets/images/splash2.png', 'assets/images/splash3.png', 'assets/images/splash4.png'])
     explosion_frames = load_frames(['assets/images/explosion1.png', 'assets/images/explosion2.png', 'assets/images/explosion3.png'])
     player_frames = load_frames(['assets/images/player_full.png', 'assets/images/player_damaged1.png', 'assets/images/player_damaged2.png'])
@@ -25,12 +25,13 @@ def run_game():
     running = True
     debug = DEBUG_MODE
 
+    # TODO: Add see texture
     # Pre-tile sea background once into a surface
     sea_bg = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-    # tex_w, tex_h = sea_tex.get_width(), sea_tex.get_height()
-    # for x in range(0, SCREEN_WIDTH, tex_w):
-    #     for y in range(0, SCREEN_HEIGHT, tex_h):
-    #         sea_bg.blit(sea_tex, (x, y))
+    tex_w, tex_h = sea_tex.get_width(), sea_tex.get_height()
+    for x in range(0, SCREEN_WIDTH, tex_w):
+        for y in range(0, SCREEN_HEIGHT, tex_h):
+            sea_bg.blit(sea_tex, (x, y))
 
     while running:
         # Close window if x is pressed
@@ -62,8 +63,6 @@ def run_game():
 
         # Draw projectiles
         for projectile in game.projectiles:
-            # blit rotated cannonball
-            # draw_rotated(screen, cannon_img, projectile.x, projectile.y, projectile.angle)
             if debug:
                 # hitbox circle
                 pygame.draw.circle(overlay, (255,255,255,80), (int(projectile.x), int(projectile.y)), projectile.radius, width=1)
@@ -76,12 +75,10 @@ def run_game():
                 # Draw explosion effect
                 explosion_effect = AnimatedEffect(explosion_frames, (impact[0].x, impact[0].y), duration=1500)
                 active_effects.append(explosion_effect)
-                print("Hit effect added") # temp!
             elif impact[1] == "miss":
                 # Draw splash effect
                 splash_effect = AnimatedEffect(splash_frames, (impact[0].x, impact[0].y), duration=1500)
                 active_effects.append(splash_effect)
-                print("Splash effect added") # temp!
             game.impacts.pop(0) # Remove the impact after processing
 
         for effect in active_effects[:]:
