@@ -129,5 +129,4 @@ class Ship(Entity):
 
     def on_destroy(self):
         self.is_living = False
-        # TODO: handle ship destruction (e.g. explosion, game over)
         pass
