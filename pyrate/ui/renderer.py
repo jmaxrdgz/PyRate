@@ -25,7 +25,6 @@ def run_game():
     running = True
     debug = DEBUG_MODE
 
-    # TODO: Add see texture
     # Pre-tile sea background once into a surface
     sea_bg = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
     tex_w, tex_h = sea_tex.get_width(), sea_tex.get_height()
@@ -63,6 +62,7 @@ def run_game():
 
         # Draw projectiles
         for projectile in game.projectiles:
+            pygame.draw.circle(screen, (0, 0, 0), (int(projectile.x), int(projectile.y)), projectile.radius)
             if debug:
                 # hitbox circle
                 pygame.draw.circle(overlay, (255,255,255,80), (int(projectile.x), int(projectile.y)), projectile.radius, width=1)
@@ -137,29 +137,3 @@ def load_frames(path_list):
         print(f"Error loading frames: {e}")
         frames = []
     return frames
-
-
-
-
-
-
-
-
-
-
-
-# # When a cannonball hits the sea
-# splash_effect = AnimatedEffect(splash_frames, (x, y), duration=500)
-# active_effects.append(splash_effect)
-
-# # When a cannonball hits a ship
-# explosion_effect = AnimatedEffect(explosion_frames, (x, y), duration=300)
-# active_effects.append(explosion_effect)
-
-# # When a ship moves forward
-# water_displacement_effect = AnimatedEffect(water_displacement_frames, (x, y), duration=400, loop=True)
-# active_effects.append(water_displacement_effect)
-
-# # When a ship's health decreases
-# damage_level = int((1 - ship.health / ship.max_health) * (len(damage_frames) - 1))
-# ship_image = damage_frames[damage_level]
