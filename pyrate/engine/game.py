@@ -79,6 +79,7 @@ class Game:
                     self.impacts.append((proj, 'hit'))
         self.projectiles = [p for p in self.projectiles if p not in collisions]
 
+    # TODO: Collision between 2 hitboxes (not hitbox to center)
     def _handle_ship_collisions(self):
         ships = [self.player_ship] + self.enemies
         for i in range(len(ships)):
@@ -93,13 +94,13 @@ class Game:
                 overlap = (s1.width/2 + s2.width/2) - distance(s1, s2)
                 # push half the overlap each
                 if overlap > 0:
-                    s1.x += nx * (overlap/2)
-                    s1.y += ny * (overlap/2)
-                    s2.x -= nx * (overlap/2)
-                    s2.y -= ny * (overlap/2)
+                    s1.x += nx * overlap * 1.25
+                    s1.y += ny * overlap * 1.25
+                    s2.x -= nx * overlap * 1.25
+                    s2.y -= ny * overlap * 1.25
                 # apply damage only if not both enemies
                 if not (isinstance(s1, EnemyShip) and isinstance(s2, EnemyShip)):
-                    dmg = self.compute_damage(s1, s2)
+                    dmg = self.compute_damage(s1, s2) / 3 # temp!
                     s1.apply_damage(dmg)
                     s2.apply_damage(dmg)
                     print(f"Collision between {s1.name} and {s2.name}: {dmg} damage each, "
