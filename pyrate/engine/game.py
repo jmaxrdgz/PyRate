@@ -45,7 +45,7 @@ class Game:
 
         # update enemies
         for enemy in self.enemies:
-            enemy.update(px, py, pa)
+            enemy.update(px, py, pa, self.enemies)
 
         # update projectiles and gather new from ships
         # transfer projectiles
@@ -99,6 +99,8 @@ class Game:
         removed = before - len(self.enemies)
         if removed > 0:
             print(f"Removed {removed} destroyed enemy ship(s)")
+
+        # TODO: Add end game 
 
     def collide(self, entity1, entity2):
         """
