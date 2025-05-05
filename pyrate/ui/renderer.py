@@ -24,6 +24,7 @@ def run_game():
 
     running = True
     debug = DEBUG_MODE
+    active_effects = []
 
     # Pre-tile sea background once into a surface
     sea_bg = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -67,19 +68,14 @@ def run_game():
                 # hitbox circle
                 pygame.draw.circle(overlay, (255,255,255,80), (int(projectile.x), int(projectile.y)), projectile.radius, width=1)
 
-        # Draw animated effects
-        active_effects = []
-
-        for impact in game.impacts:
+        new_impacts = game.impacts[:]
+        game.impacts.clear()
+        for impact in new_impacts:
             if impact[1] == "hit":
-                # Draw explosion effect
-                explosion_effect = AnimatedEffect(explosion_frames, (impact[0].x, impact[0].y), duration=1500)
-                active_effects.append(explosion_effect)
+                effect = AnimatedEffect(explosion_frames, (impact[0].x, impact[0].y), duration=200)
             elif impact[1] == "miss":
-                # Draw splash effect
-                splash_effect = AnimatedEffect(splash_frames, (impact[0].x, impact[0].y), duration=1500)
-                active_effects.append(splash_effect)
-            game.impacts.pop(0) # Remove the impact after processing
+                effect = AnimatedEffect(splash_frames, (impact[0].x, impact[0].y), duration=300)
+            active_effects.append(effect)
 
         for effect in active_effects[:]:
             effect.update()
