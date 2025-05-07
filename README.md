@@ -34,6 +34,9 @@ You can also use pip in an existing environment
 PyRate includes an HTTP API for controlling the player ship programmatically.  
   
 ### Start the API server
+Make sure that the API control option is set in the ```pyrate/settings.py```file as such :  
+```INPUT_MODE = "api"```  
+You can then launch the API server with the command :
 ```uvicorn pyrate.api:app --reload```  
   
 ### Endpoints overview
@@ -65,7 +68,7 @@ See the script: ```tests/dummy_agent.py```
 Make sure the API server is running, then execute:
 
 ```
-python dummy_agent.py
+python tests/dummy_agent.py
 ```
 
 ### Agent Logic
