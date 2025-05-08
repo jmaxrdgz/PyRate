@@ -19,6 +19,10 @@ def run_game():
         'assets/images/splash1.png', 'assets/images/splash2.png',
         'assets/images/splash3.png', 'assets/images/splash4.png'
     ])
+
+    island_raw = pygame.image.load("assets/images/island.png").convert_alpha()
+    island_img = pygame.transform.scale(island_raw, (100, 100)) 
+
     explosion_frames = load_frames([
         'assets/images/explosion1.png', 'assets/images/explosion2.png',
         'assets/images/explosion3.png'
@@ -81,6 +85,10 @@ def run_game():
 
         # Render world
         screen.blit(sea_bg, (0, 0))
+        for island in game.islands:
+            rect = island_img.get_rect(center=(int(island.x), int(island.y)))
+            screen.blit(island_img, rect)
+
         if debug:
             overlay.fill((0, 0, 0, 0))
 

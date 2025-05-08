@@ -6,7 +6,7 @@ from pyrate.engine.entities.enemy import EnemyShip
 from pyrate.engine.entities.projectile import Cannonball
 from pyrate.engine.input import handle_input
 from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT
-
+from pyrate.engine.entities.island import Island
 
 def sat_mtv(poly1, poly2):
     """
@@ -65,6 +65,8 @@ class Game:
         player_y = SCREEN_HEIGHT // 2
         self.player_ship = Ship(player_x, player_y)
 
+        self.ships_colliding_with_island = {}
+
         self.projectiles = []
         self.impacts = []
         self.enemies = []
@@ -76,6 +78,13 @@ class Game:
             if math.hypot(x - player_x, y - player_y) >= min_distance:
                 self.enemies.append(EnemyShip(x, y))
             attempts += 1
+
+
+        self.islands = [
+            Island(300, 250, radius=60),
+            Island(600, 450, radius=60),
+        ]
+
 
     def update(self):
         # skip logic if game ended
@@ -111,6 +120,25 @@ class Game:
         self._handle_projectile_hits()
         self._handle_ship_collisions()
 
+        for ship in [self.player_ship] + self.enemies:
+            collided = False
+            for island in self.islands:
+                if self.collide(ship, island):
+                    dx = ship.x - island.x
+                    dy = ship.y - island.y  
+                    nx, ny = normalize(dx, dy)
+                    ship.x += nx * 4
+                    ship.y += ny * 4
+
+                    if not self.ships_colliding_with_island.get(ship, False):
+                        ship.apply_damage(0.5)
+                        print(f"{ship.name} hit an island !") 
+                        self.ships_colliding_with_island[ship] = True
+                    collided = True
+                    break
+                if not collided:
+                    self.ships_colliding_with_island[ship] = False
+    
         # end game check
         self._check_end_conditions()
 
@@ -199,3 +227,4 @@ class Game:
 
     def get_projectile_position(self):
         return [(int(p.x), int(p.y)) for p in self.projectiles]
+    
