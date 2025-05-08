@@ -166,3 +166,39 @@ def load_frames(path_list):
     except pygame.error as e:
         print(f"Error loading frames: {e}")
         return []
+
+
+def draw_ship(screen, ship, frames, debug=False):
+    if not ship.is_living:
+        return
+    if ship.health > 50:
+        sprite = frames[0]
+    elif ship.health > 20:
+        sprite = frames[1]
+    else:
+        sprite = frames[2]
+    draw_entity(screen, ship, sprite, debug)
+    draw_health_bar(screen, ship)  # ⬅️ AJOUT
+
+
+def draw_health_bar(surface, ship):
+    if not ship.is_living:
+        return
+
+    bar_width = 40
+    bar_height = 6
+    x = int(ship.x - bar_width / 2)
+    y = int(ship.y - ship.height / 2 - 12)  # juste au-dessus du vaisseau
+
+    # fond rouge
+    pygame.draw.rect(surface, (100, 0, 0), (x, y, bar_width, bar_height))
+
+    # barre verte selon la vie restante
+    health_ratio = ship.health / 100
+    pygame.draw.rect(surface, (0, 200, 0), (x, y, int(bar_width * health_ratio), bar_height))
+
+    # bordure blanche
+    pygame.draw.rect(surface, (255, 255, 255), (x, y, bar_width, bar_height), 1)
+
+
+
