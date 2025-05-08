@@ -188,16 +188,16 @@ def draw_health_bar(surface, ship):
     bar_width = 40
     bar_height = 6
     x = int(ship.x - bar_width / 2)
-    y = int(ship.y - ship.height / 2 - 12)  # juste au-dessus du vaisseau
+    y = int(ship.y - ship.height / 2 - 12)  
 
-    # fond rouge
+    # red back
     pygame.draw.rect(surface, (100, 0, 0), (x, y, bar_width, bar_height))
 
-    # barre verte selon la vie restante
+    # green bar life
     health_ratio = ship.health / 100
     pygame.draw.rect(surface, (0, 200, 0), (x, y, int(bar_width * health_ratio), bar_height))
 
-    # bordure blanche
+    # white border
     pygame.draw.rect(surface, (255, 255, 255), (x, y, bar_width, bar_height), 1)
 
 

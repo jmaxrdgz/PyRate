@@ -4,6 +4,8 @@ import time
 
 from pyrate.engine.entities.entity import Entity
 from pyrate.engine.entities.projectile import Cannonball
+from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT
+
 
 class Ship(Entity):
 
@@ -54,10 +56,16 @@ class Ship(Entity):
         # Apply rotation
         self.angle += self.rotation_velocity
 
-        # Apply displacement
+        # Apply movement
         rad = math.radians(self.angle)
         self.x += self.speed * math.cos(rad)
         self.y += self.speed * math.sin(rad)
+
+        # Keep ship within screen bounds
+        self.x = max(20, min(self.x, SCREEN_WIDTH - 20))
+        self.y = max(20, min(self.y, SCREEN_HEIGHT - 20))
+
+
 
 
     def get_hitbox(self):

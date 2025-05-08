@@ -1,5 +1,7 @@
 # pyrate/engine/entities/enemy.py
 from pyrate.engine.entities.ship import Ship
+from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT
+
 import math, random
 import time
 
@@ -16,10 +18,32 @@ class EnemyShip(Ship):
         self.time = 0
 
     def update(self, player_x, player_y, player_angle, all_enemies):
+
         dx = player_x - self.x
         dy = player_y - self.y
         dist_to_player = math.hypot(dx, dy)
         dist_to_anchor = math.hypot(self.x - self.anchor_x, self.y - self.anchor_y)
+          
+            # Add borders
+        near_edge = (
+            self.x < 60 or self.x > SCREEN_WIDTH - 60 or
+            self.y < 60 or self.y > SCREEN_HEIGHT - 60
+        )
+        
+        if near_edge:
+        # Moov the boat towards the center of the screen
+            angle_to_center = math.degrees(math.atan2(SCREEN_HEIGHT/2 - self.y, SCREEN_WIDTH/2 - self.x))
+        
+            diff = (angle_to_center - self.angle + 180) % 360 - 180
+
+            if abs(diff) > 10:
+                self._steer_towards(angle_to_center, deadzone=3)
+
+            # Go back slowly to the center of the screen
+            if self.speed < self.max_speed * 0.5:
+                self.accelerate()
+         
+        
 
         in_pursuit = dist_to_player < self.agro_radius
         # Détecter mode parallèle (à bonne distance)

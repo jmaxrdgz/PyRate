@@ -1,0 +1,48 @@
+import requests
+import time
+import random
+
+API_URL = "http://127.0.0.1:8000"
+
+ACTIONS = ["accelerate", "decelerate", "turn_left", "turn_right", "fire"]
+
+def get_player_status():
+    response = requests.get(f"{API_URL}/player/status")
+    return response.json()
+
+def get_enemies_status():
+    response = requests.get(f"{API_URL}/enemies/status")
+    return response.json()["enemies"]
+
+def send_command(action, side="left"):
+    payload = {"action": action, "side": side}
+    response = requests.post(f"{API_URL}/player/command", json=payload)
+    return response.json()
+
+def update_game():
+    requests.post(f"{API_URL}/game/update")
+
+def dummy_decision():
+    """Renvoie une action aléatoire, tire si un ennemi est proche."""
+    enemies = get_enemies_status()
+    player = get_player_status()
+
+    for enemy in enemies:
+        dx = enemy['x'] - player['x']
+        dy = enemy['y'] - player['y']
+        distance = (dx ** 2 + dy ** 2) ** 0.5
+        if distance < 200:
+            return "fire"
+
+    return random.choice(["turn_left", "turn_right", "accelerate", "decelerate"])
+
+def run():
+    while True:
+        action = dummy_decision()
+        print(f"Sending action: {action}")
+        send_command(action)
+        update_game()
+        time.sleep(0.2)  # boucle lente : 5x par seconde environ
+
+if __name__ == "__main__":
+    run()
