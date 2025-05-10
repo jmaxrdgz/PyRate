@@ -7,6 +7,12 @@ from pyrate.engine.entities.projectile import Cannonball
 from pyrate.engine.input import handle_input
 from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT
 from pyrate.engine.entities.island import Island
+import time
+from pyrate.engine.entities.bonus import Bonus
+
+
+
+
 
 def sat_mtv(poly1, poly2):
     """
@@ -67,6 +73,9 @@ class Game:
 
         self.ships_colliding_with_island = {}
 
+        self.bonuses = []
+        self.last_bonus_time = time.time()
+
         self.projectiles = []
         self.impacts = []
         self.enemies = []
@@ -84,6 +93,9 @@ class Game:
             Island(300, 250, radius=60),
             Island(600, 450, radius=60),
         ]
+        self.score = 0
+
+
 
 
     def update(self):
@@ -94,6 +106,10 @@ class Game:
         handle_input(self.player_ship)
         self.player_ship.update()
         px, py, pa = self.player_ship.x, self.player_ship.y, self.player_ship.angle
+
+        self._maybe_spawn_bonus()
+        self._handle_bonus_collection()
+
 
         # update enemies
         for enemy in self.enemies:
@@ -159,6 +175,9 @@ class Game:
                     print(f"{target.name} took {proj.damage} damage, health remaining {target.health}")
                     collisions.append(proj)
                     self.impacts.append((proj, 'hit'))
+                if not target.is_living and isinstance(target, EnemyShip):
+                    self.score += 100
+                    print("Enemy destroyed! +100 points")
         self.projectiles = [p for p in self.projectiles if p not in collisions]
 
     def _handle_ship_collisions(self):
@@ -228,3 +247,42 @@ class Game:
     def get_projectile_position(self):
         return [(int(p.x), int(p.y)) for p in self.projectiles]
     
+    def _maybe_spawn_bonus(self):
+        now = time.time()
+        if now - self.last_bonus_time < 10:
+            return
+
+        for _ in range(10):  
+            x = random.randint(50, SCREEN_WIDTH - 50)
+            y = random.randint(50, SCREEN_HEIGHT - 50)
+
+            if any(math.hypot(x - island.x, y - island.y) < island.radius + 30 for island in self.islands):
+                continue
+
+            bonus_type = random.choice(["health", "damage"])
+            self.bonuses.append(Bonus(x, y, bonus_type))
+            self.last_bonus_time = now
+            print(f"Spawned bonus {bonus_type} at ({x}, {y})")
+            break
+
+    def _apply_bonus(self, bonus_type):
+        if bonus_type == "health":
+            self.player_ship.health = min(self.player_ship.health + 50, 100)
+            print("Health increased by 50")
+        elif bonus_type == "damage":
+            self.player_ship.temp_damage_boost = True
+            print("Next shot will deal double damage!")
+
+    def _handle_bonus_collection(self):
+        for bonus in self.bonuses:
+            if bonus.collected:
+                continue
+            dx = self.player_ship.x - bonus.x
+            dy = self.player_ship.y - bonus.y
+            if math.hypot(dx, dy) < self.player_ship.width // 2 + bonus.radius:
+                bonus.collected = True
+                self._apply_bonus(bonus.type)
+
+
+
+        

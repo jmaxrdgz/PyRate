@@ -34,6 +34,9 @@ class Ship(Entity):
         self.is_living = True
         self.height = 100
         self.width = 40
+    
+        self.temp_damage_boost = False
+
 
 
     def update(self):
@@ -125,8 +128,16 @@ class Ship(Entity):
 
         x = self.x + math.cos(offset_rad) * 20
         y = self.y + math.sin(offset_rad) * 20
+        
+        cannonball = Cannonball(x, y, cannon_angle)
+        if self.temp_damage_boost:
+            cannonball.damage *= 2
+            self.temp_damage_boost = False
 
-        self.projectiles.append(Cannonball(x, y, cannon_angle))
+        self.projectiles.append(cannonball)
+
+
+
 
 
     def apply_damage(self, amount):

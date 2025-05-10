@@ -21,7 +21,7 @@ def run_game():
     ])
 
     island_raw = pygame.image.load("assets/images/island.png").convert_alpha()
-    island_img = pygame.transform.scale(island_raw, (100, 100)) 
+    island_img = pygame.transform.scale(island_raw, (150, 150)) 
 
     explosion_frames = load_frames([
         'assets/images/explosion1.png', 'assets/images/explosion2.png',
@@ -39,6 +39,7 @@ def run_game():
     # Fonts for end screens
     font = pygame.font.Font(None, 74)
     small_font = pygame.font.Font(None, 36)
+    score_font = pygame.font.Font(None, 32)
 
     # semi-transparent overlay for debug drawings
     overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
@@ -113,6 +114,12 @@ def run_game():
                     overlay, (255, 255, 255, 80),
                     (int(projectile.x), int(projectile.y)), projectile.radius, width=1
                 )
+        
+        # Bonuses
+        for bonus in game.bonuses:
+            if not bonus.collected:
+                bonus.draw(screen)
+
 
         # Animated effects
         new_impacts = game.impacts[:]
@@ -135,6 +142,9 @@ def run_game():
         # Debug overlay
         if debug:
             screen.blit(overlay, (0, 0))
+
+        score_text = score_font.render(f"Score : {game.score}", True, (255, 255, 255))
+        screen.blit(score_text, (20, 20))
 
         pygame.display.flip()
         clock.tick(FPS)
