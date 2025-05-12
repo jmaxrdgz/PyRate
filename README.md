@@ -27,6 +27,9 @@ You can also use pip in an existing environment
 ```pip install -r requirements.txt``` 
   
 ### Launch the game  
+You can test the game with the keyboard using the following constant in ```settings.py```:  
+```INPUT_MODE = "keyboard"```  
+Then launch the game  
 ```python -m pyrate.main```  
  
   
@@ -36,8 +39,9 @@ PyRate includes an HTTP API for controlling the player ship programmatically.
 ### Start the API server
 Make sure that the API control option is set in the ```pyrate/settings.py```file as such :  
 ```INPUT_MODE = "api"```  
-You can then launch the API server with the command :
-```uvicorn pyrate.api:app --reload```  
+Run the launcher script :  
+```sh server_lancher.sh```  
+This script launches the FastAPI server (uvicorn) on port 8000.
   
 ### Endpoints overview
 Endpoint | Method | Description
@@ -49,6 +53,7 @@ Endpoint | Method | Description
 |/enemies/status | GET | Get status of all enemies|
 |/projectiles/status | GET | Get status of all projectiles|
 |/game/update | POST | Force a game state update (1 frame step)|
+|/video/stream | GET | Live MJPEG video stream|
   
 ### Command Format
 ```
@@ -59,22 +64,63 @@ Endpoint | Method | Description
 ```
 
 # 🤖 Dummy Agent
-A simple agent is available to control the player ship using the API. It sends random actions, and fires automatically when enemies are nearby.
+A simple agent script is included for testing or as a base to create your own.
 
-### Location
-See the script: ```tests/dummy_agent.py```
-
-### Launch the Dummy Agent
-Make sure the API server is running, then execute:
-
+### 📍 Location
 ```
-python tests/dummy_agent.py
+tests/dummy_agent.py
 ```
+  
+### ▶️ Launch the Dummy Agent
+On the client machine (where you want to control and view the game):
+```
+sh client_launcher.sh
+```
+This script will:
+- Open the game stream in your browser
+- Launch dummy_agent.py which sends commands to the player
 
 ### Agent Logic
 - Randomly chooses one of: accelerate, decelerate, turn_left, turn_right  
 - If an enemy is within 200 units, it prioritizes firing  
   
+# ✏️ Create Your Own Agent
+To write a custom agent:
+
+1. Copy dummy_agent.py and rename it:
+```
+cp tests/dummy_agent.py tests/my_agent.py
+```
+2. Modify the logic inside run_agent():
+```
+def run_agent():
+    while True:
+        status = requests.get(f"{SERVER_URL}/player/status").json()
+        # Insert your logic here...
+        action = {"action": "turn_right"}
+        requests.post(f"{SERVER_URL}/player/command", json=action)
+        time.sleep(0.2)
+```
+3. Update client_launcher.sh to call your custom script:
+```
+python tests/my_agent.py &
+```
+  
+# 🛑 Stop the Server and Client
+To stop everything:
+
+### Server (on server machine)
+- Press Ctrl+C in the terminal running the server
+- Or use:
+```
+pkill -f "uvicorn pyrate.api:app"
+```
+### Client (on client machine)
+- Close the browser tab
+- Press Ctrl+C to stop the agent, or:
+```
+pkill -f dummy_agent.py
+```
 
 # To-Do
 ### Map
@@ -87,6 +133,5 @@ python tests/dummy_agent.py
 - Add bonus drops & ship upgrades 
 - Add multiplayer (Team vs team)
 ### API
-- Add sensors (robotic-like : noise, noisy data...) *
-- Return video *
+- Add sensors (robotic-like : noise, noisy data...) *  
 - Enrich API functionalities
