@@ -1,14 +1,25 @@
-#!/usr/bin/env bash
-# client_launcher.sh
+#!/bin/bash
 
-# 1. Open video stream in browser (Linux/macOS)
-open "http://127.0.0.1:8000/video/stream"
+# Configuration de l'IP du serveur
+SERVER_IP="127.0.0.1"  # Remplacez par l'adresse IP du serveur si nécessaire
+PORT="8000"
 
-# 2. Activate env if needed for agent
-source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate pyrate
+# Vérification si le serveur est accessible
+if curl -s --head --request GET "http://$SERVER_IP:$PORT/video/stream" | grep "200 OK" > /dev/null; then
+    echo "Connexion au serveur réussie. Lancement du flux vidéo..."
+    # Ouvrir le flux vidéo dans un navigateur par défaut
+    if command -v xdg-open > /dev/null; then
+        xdg-open "http://$SERVER_IP:$PORT/video/stream"
+    elif command -v open > /dev/null; then
+        open "http://$SERVER_IP:$PORT/video/stream"
+    else
+        echo "Impossible d'ouvrir le navigateur. Veuillez ouvrir manuellement http://$SERVER_IP:$PORT/video/stream"
+    fi
+else
+    echo "Serveur non accessible à l'adresse http://$SERVER_IP:$PORT"
+    exit 1
+fi
 
-# 3. Launch dummy agent
-python tests/dummy_agent.py
+# Lancer l'agent en tâche de fond
+python tests/dummy_agent.py &
 
-chmod +x client_launcher.sh

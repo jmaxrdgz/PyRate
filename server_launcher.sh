@@ -1,14 +1,10 @@
-#!/usr/bin/env bash
-# server_launcher.sh
+#!/bin/bash
 
-# 1. Activate your conda env
-source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate pyrate
-
-# 2. (Optional) Export SDL dummy driver for headless
-export SDL_VIDEODRIVER=dummy
-
-# 3. Start the API (game engine runs inside)
-uvicorn pyrate.api:app --host 0.0.0.0 --port 8000 --reload
-
-chmod +x server_launcher.sh
+# Vérification si le serveur est déjà lancé
+if pgrep -f "uvicorn pyrate.api:app" > /dev/null; then
+    echo "Le serveur est déjà en cours d'exécution."
+else
+    echo "Lancement du serveur PyRate..."
+    # Lancer le serveur uvicorn avec reload pour le développement
+    uvicorn pyrate.api:app --reload
+fi
