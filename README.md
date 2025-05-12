@@ -80,9 +80,13 @@ python tests/dummy_agent.py
 ### Map
 - Add borders
 - Add camera displacement 
-- Add island and forts generation
+- Add island and forts generation *
 ### Gameplay
 - Add UI
 - Add scores & objectives
-- Add bonus drops & ship upgrades
-- Add colisions
+- Add bonus drops & ship upgrades 
+- Add multiplayer (Team vs team)
+### API
+- Add sensors (robotic-like : noise, noisy data...) *
+- Return video *
+- Enrich API functionalities
