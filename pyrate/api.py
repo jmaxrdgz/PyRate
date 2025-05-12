@@ -1,7 +1,13 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
+import io
+from PIL import Image
+from pyrate.ui.renderer import render_frame_to_surface
 from pydantic import BaseModel
 from typing import List
 import math
+import pygame
+import time
 
 from pyrate.engine.game import Game
 from pyrate.engine.entities.ship import Ship
@@ -122,6 +128,49 @@ def trigger_game_update():
     print(">> Manual game update triggered")
     game.update()
     return {"status": "game updated"}
+
+@app.get("/game/frame")
+def get_rendered_frame():
+    """
+    Return the current rendered frame as a JPEG image.
+    """
+    try:
+        surface = render_frame_to_surface(game)
+        raw_str = pygame.image.tostring(surface, 'RGB')
+        img = Image.frombytes("RGB", surface.get_size(), raw_str)
+
+        buffer = io.BytesIO()
+        img.save(buffer, format="JPEG")
+        buffer.seek(0)
+
+        return StreamingResponse(buffer, media_type="image/jpeg")
+    except Exception as e:
+        print(f"Error rendering frame: {e}")
+        raise HTTPException(status_code=500, detail="Failed to render frame")
+
+@app.get("/video/stream")
+def stream_video():
+    """
+    Stream the game video as MJPEG.
+    """
+    def generate():
+        clock = pygame.time.Clock()
+        while True:
+            surface = render_frame_to_surface(game)
+            raw_str = pygame.image.tostring(surface, "RGB")
+            image = Image.frombytes("RGB", surface.get_size(), raw_str)
+            buffer = io.BytesIO()
+            image.save(buffer, format="JPEG")
+            frame = buffer.getvalue()
+
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
+            )
+
+            clock.tick(30)  # FPS target
+
+    return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 # Input handler directly in the API
 def handle_input_api(ship: Ship, cmd: Command):
