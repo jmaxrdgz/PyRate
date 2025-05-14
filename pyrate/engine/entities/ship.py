@@ -4,6 +4,8 @@ import time
 
 from pyrate.engine.entities.entity import Entity
 from pyrate.engine.entities.projectile import Cannonball
+from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT
+
 
 class Ship(Entity):
 
@@ -32,6 +34,9 @@ class Ship(Entity):
         self.is_living = True
         self.height = 100
         self.width = 40
+    
+        self.temp_damage_boost = False
+
 
 
     def update(self):
@@ -54,10 +59,16 @@ class Ship(Entity):
         # Apply rotation
         self.angle += self.rotation_velocity
 
-        # Apply displacement
+        # Apply movement
         rad = math.radians(self.angle)
         self.x += self.speed * math.cos(rad)
         self.y += self.speed * math.sin(rad)
+
+        # Keep ship within screen bounds
+        self.x = max(20, min(self.x, SCREEN_WIDTH - 20))
+        self.y = max(20, min(self.y, SCREEN_HEIGHT - 20))
+
+
 
 
     def get_hitbox(self):
@@ -117,8 +128,16 @@ class Ship(Entity):
 
         x = self.x + math.cos(offset_rad) * 20
         y = self.y + math.sin(offset_rad) * 20
+        
+        cannonball = Cannonball(x, y, cannon_angle)
+        if self.temp_damage_boost:
+            cannonball.damage *= 2
+            self.temp_damage_boost = False
 
-        self.projectiles.append(Cannonball(x, y, cannon_angle))
+        self.projectiles.append(cannonball)
+
+
+
 
 
     def apply_damage(self, amount):
