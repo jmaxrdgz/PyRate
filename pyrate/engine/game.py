@@ -77,6 +77,7 @@ class Game:
                 self.enemies.append(EnemyShip(x, y))
             attempts += 1
 
+
     def update(self):
         # skip logic if game ended
         if self.state != "playing":
@@ -114,6 +115,7 @@ class Game:
         # end game check
         self._check_end_conditions()
 
+
     def _check_end_conditions(self):
         if not getattr(self.player_ship, 'is_living', True):
             self.state = "gameover"
@@ -121,6 +123,7 @@ class Game:
         elif not self.enemies:
             self.state = "victory"
             print("Victory: All enemy ships destroyed.")
+
 
     def _handle_projectile_hits(self):
         collisions = []
@@ -132,6 +135,7 @@ class Game:
                     collisions.append(proj)
                     self.impacts.append((proj, 'hit'))
         self.projectiles = [p for p in self.projectiles if p not in collisions]
+
 
     def _handle_ship_collisions(self):
         ships = [self.player_ship] + self.enemies
@@ -164,6 +168,7 @@ class Game:
         if removed:
             print(f"Removed {removed} destroyed enemy ship(s)")
 
+
     def collide(self, e1, e2):
         poly1 = e1.get_hitbox()
         poly2 = e2.get_hitbox()
@@ -179,6 +184,7 @@ class Game:
                     return False
         return True
 
+
     def compute_damage(self, e1, e2):
         rad1 = math.radians(e1.angle)
         v1x, v1y = e1.speed*math.cos(rad1), e1.speed*math.sin(rad1)
@@ -191,11 +197,14 @@ class Game:
         coeff = (e1.dmg_coeff + e2.dmg_coeff)/2
         return rel_speed * coeff * impact
 
+
     def get_player_position(self):
         return int(self.player_ship.x), int(self.player_ship.y)
 
+
     def get_enemies_positions(self):
         return [(int(e.x), int(e.y), e.agro_radius) for e in self.enemies]
+
 
     def get_projectile_position(self):
         return [(int(p.x), int(p.y)) for p in self.projectiles]

@@ -8,9 +8,8 @@ from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, DEBUG_MODE
 from pyrate.engine.game import Game
 from pyrate.ui.animation import AnimatedEffect
 
-# Initialize pygame once (headless dummy display)
+# Initialize pygame
 pygame.init()
-# Ensure a dummy display mode for .convert() and .font
 pygame.display.set_mode((1, 1))
 
 
@@ -29,6 +28,7 @@ class RendererAssets:
     def __init__(self):
         # Textures
         self.sea_tex = pygame.image.load("assets/images/sea_tile.png").convert()
+
         # Sprite frames
         self.splash_frames = load_frames([
             'assets/images/splash1.png', 'assets/images/splash2.png',
@@ -61,6 +61,30 @@ class RendererAssets:
 
 # Instantiate assets once
 _assets = RendererAssets()
+
+
+def run_game():
+    """
+    Main loop for interactive play.
+    """
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("PyRate")
+    clock = pygame.time.Clock()
+    game = Game()
+    debug = DEBUG_MODE
+    effects = []
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN and game.state in ("gameover", "victory"):
+                running = False
+
+        _render_frame(screen, clock, game, _assets, debug, effects)
+
+    pygame.quit()
 
 
 def _render_frame(screen, clock, game, assets, debug, active_effects):
@@ -125,28 +149,22 @@ def _render_frame(screen, clock, game, assets, debug, active_effects):
     clock.tick(FPS)
 
 
-def run_game():
+def render_frame_to_surface(game):
     """
-    Main loop for interactive play.
+    Capture a single frame headlessly and return the Surface.
     """
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("PyRate")
+    screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
-    game = Game()
-    debug = DEBUG_MODE
     effects = []
+    _render_frame(screen, clock, game, _assets, DEBUG_MODE, effects)
+    return screen
 
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN and game.state in ("gameover", "victory"):
-                running = False
 
-        _render_frame(screen, clock, game, _assets, debug, effects)
-
-    pygame.quit()
+def draw_entity(screen, entity, sprite, debug=False):
+    rotated = pygame.transform.rotate(sprite, -entity.angle + 90)
+    screen.blit(rotated, rotated.get_rect(center=(int(entity.x), int(entity.y))))
+    if debug:
+        pygame.draw.polygon(screen, (255, 255, 255), entity.get_hitbox(), 1)
 
 
 def draw_ship(screen, ship, frames, debug=False):
@@ -158,22 +176,24 @@ def draw_ship(screen, ship, frames, debug=False):
         sprite = frames[1]
     else:
         sprite = frames[2]
+        
     draw_entity(screen, ship, sprite, debug)
+    draw_health_bar(screen, ship)
 
 
-def draw_entity(screen, entity, sprite, debug=False):
-    rotated = pygame.transform.rotate(sprite, -entity.angle + 90)
-    screen.blit(rotated, rotated.get_rect(center=(int(entity.x), int(entity.y))))
-    if debug:
-        pygame.draw.polygon(screen, (255, 255, 255), entity.get_hitbox(), 1)
+def draw_health_bar(surface, ship):
+    if not ship.is_living:
+        return
+    
+    bar_width = 40
+    bar_height = 6
+    x = int(ship.x - bar_width / 2)
+    y = int(ship.y - ship.height / 2 - 12)
+    health_ratio = ship.health / 100
+
+    pygame.draw.rect(surface, (100, 0, 0), (x, y, bar_width, bar_height))
+    pygame.draw.rect(surface, (0, 200, 0), (x, y, int(bar_width * health_ratio), bar_height))
+    pygame.draw.rect(surface, (255, 255, 255), (x, y, bar_width, bar_height), 1)
 
 
-def render_frame_to_surface(game):
-    """
-    Capture a single frame headlessly and return the Surface.
-    """
-    screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-    clock = pygame.time.Clock()
-    effects = []
-    _render_frame(screen, clock, game, _assets, DEBUG_MODE, effects)
-    return screen
+
