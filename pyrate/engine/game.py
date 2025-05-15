@@ -63,7 +63,7 @@ class Game:
     def __init__(self, n_players=4, n_enemies=3, min_distance=300):
         """ Sets up entities spawn and state. """
         self.control_mode = "api"
-        self.state = "playing"  # 'playing', 'victory', 'gameover'
+        self.state = "playing"  # 'playing', 'A victory', 'B victory', 'gameover'
 
         self.player_ships = self._spawn_players(n_players) # List of player ships
         self.enemy_ships = self._spawn_enemies(n_enemies, min_distance) # List of enemy ships
@@ -188,14 +188,34 @@ class Game:
 
 
     def _check_end_conditions(self):
-        # game over if *all* players are dead
-        if not any(p.is_living for p in self.player_ships):
+        """
+        Evaluate end-game conditions and set self.state accordingly:
+        - "A victory": at least one team-A ship alive, all team-B dead, all enemies dead
+        - "B victory": at least one team-B ship alive, all team-A dead, all enemies dead
+        - "gameover": at least one enemy alive, and both team-A and team-B ships are all dead
+        """
+        a_alive = any(p.team == "A" and p.is_living for p in self.player_ships)
+        b_alive = any(p.team == "B" and p.is_living for p in self.player_ships)
+        enemies_alive = any(e.is_living for e in self.enemy_ships)
+
+        # A victory
+        if not enemies_alive and a_alive and not b_alive:
+            self.state = "A victory"
+            print("A Victory: Team A wins, all enemies destroyed and Team B eliminated.")
+
+        # B victory
+        elif not enemies_alive and b_alive and not a_alive:
+            self.state = "B victory"
+            print("B Victory: Team B wins, all enemies destroyed and Team A eliminated.")
+
+        # Game over
+        elif enemies_alive and not a_alive and not b_alive:
             self.state = "gameover"
-            print("Game Over: All player ships destroyed.")
-        # victory if no enemies remain
-        elif not self.enemy_ships:
-            self.state = "victory"
-            print("Victory: All enemy ships destroyed.")
+            print("Game Over: All player ships destroyed, enemies still active.")
+
+        # Otherwise stay in playing
+        else:
+            self.state = "playing"
 
 
     def _handle_projectile_hits(self):

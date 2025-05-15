@@ -101,10 +101,13 @@ def _render_frame(screen, clock, game, assets, debug, active_effects):
     if game.state != "playing":
         screen.fill((0, 0, 0))
         if game.state == "gameover":
-            title = "Game Over"
+            title = "Enemies victorious!"
             color = (255, 0, 0)
-        else:
-            title = "Victory!"
+        elif game.state == "A victory":
+            title = "Team A victorious!"
+            color = (0, 255, 0)
+        elif game.state == "B victory":
+            title = "Team B victorious!"
             color = (0, 255, 0)
         text = assets.font.render(title, True, color)
         sub = assets.small_font.render("Press any key to exit", True, (255, 255, 255))
