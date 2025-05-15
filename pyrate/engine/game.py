@@ -1,6 +1,7 @@
 # pyrate/engine/game.py
 import random
 import math
+from math import hypot
 from pyrate.engine.entities.ship import Ship
 from pyrate.engine.entities.enemy import EnemyShip
 from pyrate.engine.entities.projectile import Cannonball
@@ -59,23 +60,16 @@ def normalize(dx, dy):
 
 
 class Game:
-    def __init__(self, n_enemies=3, min_distance=300):
+    def __init__(self, n_players=2, n_enemies=3, min_distance=300):
         """ Sets up entities spawn and state. """
-        player_x = SCREEN_WIDTH // 2
-        player_y = SCREEN_HEIGHT // 2
-        self.player_ship = Ship(player_x, player_y)
+        self.control_mode = "api"
+        self.state = "playing"  # 'playing', 'victory', 'gameover'
+
+        self.player_ships = self._spawn_players(n_players) # List of player ships
+        self.enemy_ships = self._spawn_enemies(n_enemies, min_distance) # List of enemy ships
 
         self.projectiles = []
         self.impacts = []
-        self.enemies = []
-        self.state = "playing"  # 'playing', 'victory', 'gameover'
-        attempts = 0
-        while len(self.enemies) < n_enemies and attempts < n_enemies * 10:
-            x = random.randint(50, SCREEN_WIDTH - 50)
-            y = random.randint(50, SCREEN_HEIGHT - 50)
-            if math.hypot(x - player_x, y - player_y) >= min_distance:
-                self.enemies.append(EnemyShip(x, y))
-            attempts += 1
 
 
     def update(self):
@@ -83,23 +77,39 @@ class Game:
         if self.state != "playing":
             return
 
-        handle_input(self.player_ship)
-        self.player_ship.update()
-        px, py, pa = self.player_ship.x, self.player_ship.y, self.player_ship.angle
+        # 1) input & physics for each player
+        for ship in self.player_ships:
+            if self.control_mode == "keyboard":
+                handle_input(ship)
+            ship.update()
 
-        # update enemies
-        for enemy in self.enemies:
-            enemy.update(px, py, pa, self.enemies)
+        # prepare a list of (x,y,angle) for targeting
+        player_positions = [(ship.x, ship.y, ship.angle) for ship in self.player_ships]
 
-        # update projectiles
+        # 2) update enemies, targeting nearest player
+        for enemy in self.enemy_ships:
+            # find closest player
+            closest = min(
+                player_positions,
+                key=lambda p: math.hypot(p[0] - enemy.x, p[1] - enemy.y)
+            )
+            px, py, pa = closest
+            enemy.update(px, py, pa, self.enemy_ships)
+
+        # 3) update projectiles
         remaining = []
-        # gather new from ships
-        self.projectiles.extend(self.player_ship.projectiles)
-        for enemy in self.enemies:
+
+        # pull in any projectiles from all players
+        for ship in self.player_ships:
+            self.projectiles.extend(ship.projectiles)
+            ship.projectiles.clear()
+
+        # …and also from enemies
+        for enemy in self.enemy_ships:
             self.projectiles.extend(enemy.projectiles)
-        self.player_ship.projectiles.clear()
-        for enemy in self.enemies:
             enemy.projectiles.clear()
+
+        # step every projectile
         for proj in self.projectiles:
             proj.update()
             if proj.has_exceeded_range():
@@ -108,45 +118,107 @@ class Game:
                 remaining.append(proj)
         self.projectiles = remaining
 
-        # handle collisions
+        # collisions & end‐game
         self._handle_projectile_hits()
         self._handle_ship_collisions()
-
-        # end game check
         self._check_end_conditions()
 
 
+    
+    def _spawn_players(self, n_players):
+        """ Spawn player ships at predefined locations. """
+        if n_players > 4:
+            raise ValueError("Number of players must be less than 4.")
+        
+        # Spawn points defined as (x, y, angle)
+        spawn_points = [
+            (SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4, 0),
+            (SCREEN_WIDTH * 3 // 4, SCREEN_HEIGHT // 4, 180),
+            (SCREEN_WIDTH // 4, SCREEN_HEIGHT * 3 // 4, 0),
+            (SCREEN_WIDTH * 3 // 4, SCREEN_HEIGHT * 3 // 4, 180),
+        ]
+
+        player_ships = []
+        for i_player in range(n_players):
+            x, y, angle = spawn_points[i_player]
+            new_player = Ship(x, y, angle)
+            player_ships.append(new_player)
+
+        return player_ships
+    
+
+    def _spawn_enemies(self, n_enemies, min_distance):
+        """ Spawn enemy ships at random locations at least `min_distance` from every player. """
+        enemies = []
+
+        # Gather all player positions
+        player_positions = [(p.x, p.y) for p in self.player_ships]
+
+        for _ in range(n_enemies):
+            while True:
+                x = random.randint(0, SCREEN_WIDTH)
+                y = random.randint(0, SCREEN_HEIGHT)
+
+                # 1) Must be far enough from every player
+                too_close_to_player = any(
+                    hypot(x - px, y - py) < min_distance
+                    for px, py in player_positions
+                )
+                if too_close_to_player:
+                    continue
+
+                # 2) (Optional) If you still want enemies spaced from each other:
+                too_close_to_enemy = any(
+                    hypot(x - e.x, y - e.y) < min_distance
+                    for e in enemies
+                )
+                if too_close_to_enemy:
+                    continue
+
+                # passed both checks
+                break
+
+            new_enemy = EnemyShip(x, y)
+            enemies.append(new_enemy)
+
+        return enemies
+
+
     def _check_end_conditions(self):
-        if not getattr(self.player_ship, 'is_living', True):
+        # game over if *all* players are dead
+        if not any(p.is_living for p in self.player_ships):
             self.state = "gameover"
-            print("Game Over: Player ship destroyed.")
-        elif not self.enemies:
+            print("Game Over: All player ships destroyed.")
+        # victory if no enemies remain
+        elif not self.enemy_ships:
             self.state = "victory"
             print("Victory: All enemy ships destroyed.")
 
 
     def _handle_projectile_hits(self):
         collisions = []
+        targets = self.player_ships + self.enemy_ships
         for proj in self.projectiles:
-            for target in [self.player_ship] + self.enemies:
+            for target in targets:
                 if self.collide(proj, target):
                     target.apply_damage(proj.damage)
                     print(f"{target.name} took {proj.damage} damage, health remaining {target.health}")
                     collisions.append(proj)
                     self.impacts.append((proj, 'hit'))
+        # remove hit projectiles
         self.projectiles = [p for p in self.projectiles if p not in collisions]
 
 
     def _handle_ship_collisions(self):
-        ships = [self.player_ship] + self.enemies
+        ships = self.player_ships + self.enemy_ships
         for i in range(len(ships)):
             for j in range(i+1, len(ships)):
                 s1, s2 = ships[i], ships[j]
                 if not self.collide(s1, s2):
                     continue
+
                 # separation
-                dx = s1.x - s2.x
-                dy = s1.y - s2.y
+                dx, dy = s1.x - s2.x, s1.y - s2.y
                 nx, ny = normalize(dx, dy)
                 overlap = (s1.width/2 + s2.width/2) - distance(s1, s2)
                 if overlap > 0:
@@ -154,17 +226,19 @@ class Game:
                     s1.y += ny * overlap * 1.25
                     s2.x -= nx * overlap * 1.25
                     s2.y -= ny * overlap * 1.25
-                # damage
+
+                # damage (only between player↔enemy or player↔player if desired)
                 if not (isinstance(s1, EnemyShip) and isinstance(s2, EnemyShip)):
                     dmg = self.compute_damage(s1, s2) / 3
                     s1.apply_damage(dmg)
                     s2.apply_damage(dmg)
                     print(f"Collision between {s1.name} and {s2.name}: {dmg} damage each, "
                           f"{s1.name} health {s1.health}, {s2.name} health {s2.health}")
-        # remove destroyed
-        before = len(self.enemies)
-        self.enemies = [e for e in self.enemies if getattr(e, 'is_living', True)]
-        removed = before - len(self.enemies)
+
+        # clean up destroyed enemies
+        before = len(self.enemy_ships)
+        self.enemy_ships = [e for e in self.enemy_ships if e.is_living]
+        removed = before - len(self.enemy_ships)
         if removed:
             print(f"Removed {removed} destroyed enemy ship(s)")
 
@@ -198,13 +272,14 @@ class Game:
         return rel_speed * coeff * impact
 
 
-    def get_player_position(self):
-        return int(self.player_ship.x), int(self.player_ship.y)
+    def get_player_positions(self):
+        """ Return list of (x, y) for all living players """
+        return [(int(p.x), int(p.y)) for p in self.player_ships if p.is_living]
 
 
     def get_enemies_positions(self):
-        return [(int(e.x), int(e.y), e.agro_radius) for e in self.enemies]
+        return [(int(e.x), int(e.y), e.agro_radius) for e in self.enemy_ships]
 
 
-    def get_projectile_position(self):
+    def get_projectile_positions(self):
         return [(int(p.x), int(p.y)) for p in self.projectiles]

@@ -113,10 +113,12 @@ def _render_frame(screen, clock, game, assets, debug, active_effects):
             assets.overlay.fill((0, 0, 0, 0))
 
         # Player
-        draw_ship(screen, game.player_ship, assets.player_frames, debug)
+        for ship in getattr(game, "player_ships", [game.player_ships]):
+            # (optional) debug hitbox overlay for each player
+            draw_ship(screen, ship, assets.player_frames, debug)
 
         # Enemies
-        for enemy in game.enemies:
+        for enemy in game.enemy_ships:
             if debug:
                 pygame.draw.circle(assets.overlay, (0, 255, 0, 40), (int(enemy.x), int(enemy.y)), enemy.agro_radius)
             draw_ship(screen, enemy, assets.enemy_frames, debug)

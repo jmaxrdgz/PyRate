@@ -9,10 +9,10 @@ from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT
 
 class Ship(Entity):
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, angle=0):
         super().__init__(x, y, name="Ship")
         # Displacement
-        self.angle = 0  # degrees
+        self.angle = angle  # degrees
         self.speed = 0
         self.max_speed = 2
         self.acceleration = 0.1

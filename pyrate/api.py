@@ -7,16 +7,16 @@ from pydantic import BaseModel
 from typing import List
 import math
 import pygame
+import random
 import time
 
 from pyrate.engine.game import Game
 from pyrate.engine.entities.ship import Ship
 from pyrate.engine.entities.projectile import Cannonball
 
-# To run the API: uvicorn pyrate.api:app --reload
-
 app = FastAPI()
 game = Game()
+
 
 class ShipStatus(BaseModel):
     x: float
@@ -26,6 +26,7 @@ class ShipStatus(BaseModel):
     is_living: bool
     projectile_count: int
 
+
 class ProjectileStatus(BaseModel):
     x: float
     y: float
@@ -33,147 +34,87 @@ class ProjectileStatus(BaseModel):
     speed: float
     radius: float
 
+
 class Command(BaseModel):
     action: str
     side: str = "left"
 
+
 class CommandResponse(BaseModel):
     status: str
 
+
+class ControlMode(BaseModel):
+    mode: str
+
+
 @app.get("/")
 def read_root():
-    print(">> Root endpoint hit")
     return {"message": "Welcome to the PyRate API!"}
+
 
 @app.get("/game/status")
 def get_game_status():
     """
-    Retrieve general game status: player position, number of enemies, and projectile count.
+    Retrieve general game status: all players' positions, number of enemies, and projectile count.
     """
+    players = [
+        {"id": idx, "x": p.x, "y": p.y, "is_living": p.is_living}
+        for idx, p in enumerate(game.player_ships)
+    ]
+    enemies = [
+        {"id": idx, "x": e.x, "y": e.y, "is_living": e.is_living}
+        for idx, e in enumerate(game.enemy_ships)
+    ]
     status = {
-        "player_x": game.player_ship.x,
-        "player_y": game.player_ship.y,
-        "enemy_count": len(game.enemies),
+        "players": players,
+        "enemies": enemies,
         "projectile_count": len(game.projectiles),
     }
-    print(">> Game status requested:", status)
     return status
 
-@app.get("/player/status", response_model=ShipStatus)
-def get_player_status():
-    """
-    Retrieve the player ship's status.
-    """
-    player = game.player_ship
-    status = ShipStatus(
-        x=player.x,
-        y=player.y,
-        angle=player.angle,
-        speed=player.speed,
-        is_living=player.is_living,
-        projectile_count=len(player.projectiles)
-    )
-    print(">> Player status:", status)
-    return status
 
-@app.post("/player/command", response_model=CommandResponse)
-def command_player(cmd: Command):
+@app.get("/players/status", response_model=List[ShipStatus])
+def get_all_players_status():
     """
-    Issue a command to control the player ship.
+    Retrieve the status of all player ships.
     """
-    print(f">> Received command: action={cmd.action}, side={cmd.side}")
-    handle_input_api(game.player_ship, cmd)
-    game.update()
-    return CommandResponse(status="ok")
-
-@app.get("/enemies/status")
-def get_enemies_status():
-    """
-    Retrieve the list of enemy ship statuses.
-    """
-    enemies_data = []
-    for i, enemy in enumerate(game.enemies):
-        enemies_data.append({
-            "id": i,
-            "x": enemy.x,
-            "y": enemy.y,
-            "angle": enemy.angle,
-            "is_living": enemy.is_living,
-        })
-    print(f">> Enemies status: {enemies_data}")
-    return {"enemies": enemies_data}
-
-@app.get("/projectiles/status")
-def get_projectiles_status():
-    """
-    Retrieve the list of projectile statuses.
-    """
-    projectiles_data = []
-    for proj in game.projectiles:
-        projectiles_data.append(ProjectileStatus(
-            x=proj.x,
-            y=proj.y,
-            angle=proj.angle,
-            speed=proj.speed,
-            radius=getattr(proj, 'radius', 0)
+    result = []
+    for p in game.player_ships:
+        result.append(ShipStatus(
+            x=p.x, y=p.y, angle=p.angle, speed=p.speed,
+            is_living=p.is_living,
+            projectile_count=len(p.projectiles)
         ))
-    print(f">> Projectiles status: {projectiles_data}")
-    return {"projectiles": projectiles_data}
+    return result
 
-@app.post("/game/update")
-def trigger_game_update():
-    """
-    Trigger a manual game update on the server.
-    """
-    print(">> Manual game update triggered")
-    game.update()
-    return {"status": "game updated"}
 
-@app.get("/game/frame")
-def get_rendered_frame():
+@app.get("/players/{player_id}/status", response_model=ShipStatus)
+def get_player_status(player_id: int):
     """
-    Return the current rendered frame as a JPEG image.
+    Retrieve a single player ship's status by its index.
     """
     try:
-        surface = render_frame_to_surface(game)
-        raw_str = pygame.image.tostring(surface, 'RGB')
-        img = Image.frombytes("RGB", surface.get_size(), raw_str)
+        p = game.player_ships[player_id]
+    except IndexError:
+        raise HTTPException(404, f"No player with id {player_id}")
+    return ShipStatus(
+        x=p.x, y=p.y, angle=p.angle, speed=p.speed,
+        is_living=p.is_living,
+        projectile_count=len(p.projectiles)
+    )
 
-        buffer = io.BytesIO()
-        img.save(buffer, format="JPEG")
-        buffer.seek(0)
 
-        return StreamingResponse(buffer, media_type="image/jpeg")
-    except Exception as e:
-        print(f"Error rendering frame: {e}")
-        raise HTTPException(status_code=500, detail="Failed to render frame")
-
-@app.get("/video/stream")
-def stream_video():
+@app.post("/players/{player_id}/command", response_model=CommandResponse)
+def command_player(player_id: int, cmd: Command):
     """
-    Stream the game video as MJPEG.
+    Issue a command to control a specific player ship.
     """
-    def generate():
-        clock = pygame.time.Clock()
-        while True:
-            surface = render_frame_to_surface(game)
-            raw_str = pygame.image.tostring(surface, "RGB")
-            image = Image.frombytes("RGB", surface.get_size(), raw_str)
-            buffer = io.BytesIO()
-            image.save(buffer, format="JPEG")
-            frame = buffer.getvalue()
+    try:
+        ship = game.player_ships[player_id]
+    except IndexError:
+        raise HTTPException(404, f"No player with id {player_id}")
 
-            yield (
-                b"--frame\r\n"
-                b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
-            )
-
-            clock.tick(30)  # FPS target
-
-    return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")
-
-# Input handler directly in the API
-def handle_input_api(ship: Ship, cmd: Command):
     action = cmd.action.lower()
     if action == "accelerate":
         ship.accelerate()
@@ -186,4 +127,86 @@ def handle_input_api(ship: Ship, cmd: Command):
     elif action == "fire":
         ship.fire(cmd.side)
     else:
-        raise HTTPException(status_code=400, detail="Unknown command")
+        raise HTTPException(400, "Unknown command")
+
+    # immediately step one frame so the command takes effect
+    game.update()
+    return CommandResponse(status="ok")
+
+
+@app.get("/enemies/status")
+def get_enemies_status():
+    """
+    Retrieve the list of enemy ship statuses.
+    """
+    enemies_data = []
+    for i, enemy in enumerate(game.enemy_ships):
+        enemies_data.append({
+            "id": i,
+            "x": enemy.x,
+            "y": enemy.y,
+            "angle": enemy.angle,
+            "is_living": enemy.is_living,
+        })
+    return {"enemies": enemies_data}
+
+
+@app.get("/projectiles/status")
+def get_projectiles_status():
+    projectiles_data = []
+    for proj in game.projectiles:
+        projectiles_data.append(ProjectileStatus(
+            x=proj.x,
+            y=proj.y,
+            angle=proj.angle,
+            speed=proj.speed,
+            radius=getattr(proj, 'radius', 0)
+        ))
+    return {"projectiles": projectiles_data}
+
+
+@app.post("/game/update")
+def trigger_game_update():
+    game.update()
+    return {"status": "game updated"}
+
+
+@app.get("/game/frame")
+def get_rendered_frame():
+    try:
+        surface = render_frame_to_surface(game)
+        raw_str = pygame.image.tostring(surface, 'RGB')
+        img = Image.frombytes("RGB", surface.get_size(), raw_str)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+        buf.seek(0)
+        return StreamingResponse(buf, media_type="image/jpeg")
+    except Exception:
+        raise HTTPException(500, "Failed to render frame")
+
+
+@app.get("/video/stream")
+def stream_video():
+    def generate():
+        clock = pygame.time.Clock()
+        while True:
+            surface = render_frame_to_surface(game)
+            raw_str = pygame.image.tostring(surface, "RGB")
+            img = Image.frombytes("RGB", surface.get_size(), raw_str)
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG")
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n\r\n" + buf.getvalue() + b"\r\n"
+            )
+            clock.tick(30)
+    return StreamingResponse(generate(),
+        media_type="multipart/x-mixed-replace; boundary=frame")
+
+
+@app.post("/game/control")
+def set_control_mode(cm: ControlMode):
+    if cm.mode not in ("keyboard", "api"):
+        raise HTTPException(400, "mode must be 'keyboard' or 'api'")
+    game.control_mode = cm.mode
+    return {"status": "ok", "mode": cm.mode}
