@@ -9,7 +9,7 @@ from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT
 
 class Ship(Entity):
 
-    def __init__(self, x, y, angle=0):
+    def __init__(self, x, y, angle=0, team="A"):
         super().__init__(x, y, name="Ship")
         # Displacement
         self.angle = angle  # degrees
@@ -30,6 +30,7 @@ class Ship(Entity):
         self.cooldown = 4.0
 
         # Gameplay
+        self.team = team
         self.health = 100
         self.is_living = True
         self.height = 100

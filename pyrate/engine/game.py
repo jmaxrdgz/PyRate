@@ -60,7 +60,7 @@ def normalize(dx, dy):
 
 
 class Game:
-    def __init__(self, n_players=2, n_enemies=3, min_distance=300):
+    def __init__(self, n_players=4, n_enemies=3, min_distance=300):
         """ Sets up entities spawn and state. """
         self.control_mode = "api"
         self.state = "playing"  # 'playing', 'victory', 'gameover'
@@ -127,21 +127,24 @@ class Game:
     
     def _spawn_players(self, n_players):
         """ Spawn player ships at predefined locations. """
-        if n_players > 4:
-            raise ValueError("Number of players must be less than 4.")
+        if n_players > 6:
+            raise ValueError("Number of players must be less than 6.")
         
         # Spawn points defined as (x, y, angle)
-        spawn_points = [
-            (SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4, 0),
-            (SCREEN_WIDTH * 3 // 4, SCREEN_HEIGHT // 4, 180),
-            (SCREEN_WIDTH // 4, SCREEN_HEIGHT * 3 // 4, 0),
-            (SCREEN_WIDTH * 3 // 4, SCREEN_HEIGHT * 3 // 4, 180),
+        # NOTE: order of spawn points is important for the player team creation
+        spawn_info = [
+            (SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4, 0, "A"),
+            (SCREEN_WIDTH * 3 // 4, SCREEN_HEIGHT // 4, 180, "B"),
+            (SCREEN_WIDTH // 4, SCREEN_HEIGHT * 3 // 4, 0, "A"),
+            (SCREEN_WIDTH * 3 // 4, SCREEN_HEIGHT * 3 // 4, 180, "B"),
+            (SCREEN_WIDTH // 4, SCREEN_HEIGHT // 2, 0, "A"),
+            (SCREEN_WIDTH * 3 // 4, SCREEN_HEIGHT // 2, 180, "B"),
         ]
 
         player_ships = []
         for i_player in range(n_players):
-            x, y, angle = spawn_points[i_player]
-            new_player = Ship(x, y, angle)
+            x, y, angle, team = spawn_info[i_player]
+            new_player = Ship(x, y, angle, team)
             player_ships.append(new_player)
 
         return player_ships

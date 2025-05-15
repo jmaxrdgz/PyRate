@@ -38,9 +38,13 @@ class RendererAssets:
             'assets/images/explosion1.png', 'assets/images/explosion2.png',
             'assets/images/explosion3.png'
         ])
-        self.player_frames = load_frames([
-            'assets/images/player_full.png', 'assets/images/player_damaged1.png',
-            'assets/images/player_damaged2.png'
+        self.playerA_frames = load_frames([
+            'assets/images/playerA_full.png', 'assets/images/playerA_damaged1.png',
+            'assets/images/playerA_damaged2.png'
+        ])
+        self.playerB_frames = load_frames([
+            'assets/images/playerB_full.png', 'assets/images/playerB_damaged1.png',
+            'assets/images/playerB_damaged2.png'
         ])
         self.enemy_frames = load_frames([
             'assets/images/enemy_full.png', 'assets/images/enemy_damaged1.png',
@@ -114,8 +118,12 @@ def _render_frame(screen, clock, game, assets, debug, active_effects):
 
         # Player
         for ship in getattr(game, "player_ships", [game.player_ships]):
-            # (optional) debug hitbox overlay for each player
-            draw_ship(screen, ship, assets.player_frames, debug)
+            if ship.team == "A":
+                draw_ship(screen, ship, assets.playerA_frames, debug)
+            elif ship.team == "B":
+                draw_ship(screen, ship, assets.playerB_frames, debug)
+            else:
+                raise ValueError("Invalid team value. Expected 'A' or 'B' but got: " + ship.team)
 
         # Enemies
         for enemy in game.enemy_ships:
