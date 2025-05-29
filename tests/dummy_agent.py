@@ -75,8 +75,6 @@ def run():
             else:
                 send_command(action)
         # sinon on lâche les commandes pour la friction
-
-        update_game()
         # pas de sleep pour ne pas contredire clock.tick(FPS) du serveur
         # mais on peut ajouter un micro‑délai pour éviter spam trop élevé :
         time.sleep(0.001)
