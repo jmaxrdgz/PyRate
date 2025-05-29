@@ -58,6 +58,8 @@ def sat_mtv(poly1, poly2):
 def distance(a, b):
     return math.hypot(a.x - b.x, a.y - b.y)
 
+def add_uniform_noise(value, noise_range):
+    return value + random.uniform(-noise_range, noise_range) #Adds uniform noise in the range [-noise_range, +noise_range]
 
 def normalize(dx, dy):
     dist = math.hypot(dx, dy)
@@ -87,16 +89,8 @@ class Game:
             if math.hypot(x - player_x, y - player_y) >= min_distance:
                 self.enemies.append(EnemyShip(x, y))
             attempts += 1
-
-
-        self.islands = [
-            Island(300, 250, radius=60),
-            Island(600, 450, radius=60),
-        ]
-        self.score = 0
-
-
-
+        
+        self.sensor_range = 200
 
     def update(self):
         # skip logic if game ended
@@ -246,43 +240,27 @@ class Game:
 
     def get_projectile_position(self):
         return [(int(p.x), int(p.y)) for p in self.projectiles]
-    
-    def _maybe_spawn_bonus(self):
-        now = time.time()
-        if now - self.last_bonus_time < 10:
-            return
-
-        for _ in range(10):  
-            x = random.randint(50, SCREEN_WIDTH - 50)
-            y = random.randint(50, SCREEN_HEIGHT - 50)
-
-            if any(math.hypot(x - island.x, y - island.y) < island.radius + 30 for island in self.islands):
-                continue
-
-            bonus_type = random.choice(["health", "damage"])
-            self.bonuses.append(Bonus(x, y, bonus_type))
-            self.last_bonus_time = now
-            print(f"Spawned bonus {bonus_type} at ({x}, {y})")
-            break
-
-    def _apply_bonus(self, bonus_type):
-        if bonus_type == "health":
-            self.player_ship.health = min(self.player_ship.health + 50, 100)
-            print("Health increased by 50")
-        elif bonus_type == "damage":
-            self.player_ship.temp_damage_boost = True
-            print("Next shot will deal double damage!")
-
-    def _handle_bonus_collection(self):
-        for bonus in self.bonuses:
-            if bonus.collected:
-                continue
-            dx = self.player_ship.x - bonus.x
-            dy = self.player_ship.y - bonus.y
-            if math.hypot(dx, dy) < self.player_ship.width // 2 + bonus.radius:
-                bonus.collected = True
-                self._apply_bonus(bonus.type)
 
 
+    def update_sensors(self):
+        #Updates the sensors on each boat with uniform noise
+        ships = [self.player_ship] + self.enemies
+        for ship in ships:
+            ship.detected_ships = []
 
-        
+        for ship in ships:
+            for other_ship in ships:
+                if ship is other_ship:
+                    continue
+
+                dist = distance(ship, other_ship)
+                if dist <= self.sensor_range:
+                    ship.detected_ships.append({
+                        "ship": other_ship,
+                        "x": add_uniform_noise(other_ship.x, noise_range=3),
+                        "y": add_uniform_noise(other_ship.y, noise_range=3),
+                        "angle": add_uniform_noise(other_ship.angle, noise_range=5),
+                        "distance": add_uniform_noise(dist, noise_range=2),
+                    })
+
+
