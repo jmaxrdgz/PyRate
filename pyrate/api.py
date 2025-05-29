@@ -38,6 +38,7 @@ class ProjectileStatus(BaseModel):
 class Command(BaseModel):
     action: str
     side: str = "left"
+    side: str = "right"
 
 
 class CommandResponse(BaseModel):
