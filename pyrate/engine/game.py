@@ -57,6 +57,9 @@ def normalize(dx, dy):
     dist = math.hypot(dx, dy)
     return (dx / dist, dy / dist) if dist != 0 else (0, 0)
 
+def add_uniform_noise(value, noise_range):
+    return value + random.uniform(-noise_range, noise_range)
+
 
 class Game:
     def __init__(self, n_enemies=3, min_distance=300):
@@ -76,6 +79,8 @@ class Game:
             if math.hypot(x - player_x, y - player_y) >= min_distance:
                 self.enemies.append(EnemyShip(x, y))
             attempts += 1
+        
+        self.sensor_range = 200
 
     def update(self):
         # skip logic if game ended
@@ -199,3 +204,27 @@ class Game:
 
     def get_projectile_position(self):
         return [(int(p.x), int(p.y)) for p in self.projectiles]
+    
+    
+    def update_sensors(self):
+        #Updates the sensors on each boat with uniform noise
+        ships = [self.player_ship] + self.enemies
+        for ship in ships:
+            ship.detected_ships = []
+
+        for ship in ships:
+            for other_ship in ships:
+                if ship is other_ship:
+                    continue
+
+                dist = distance(ship, other_ship)
+                if dist <= self.sensor_range:
+                    ship.detected_ships.append({
+                        "ship": other_ship,
+                        "x": add_uniform_noise(other_ship.x, noise_range=3),
+                        "y": add_uniform_noise(other_ship.y, noise_range=3),
+                        "angle": add_uniform_noise(other_ship.angle, noise_range=5),
+                        "distance": add_uniform_noise(dist, noise_range=2),
+                    })
+
+
