@@ -6,12 +6,6 @@ from pyrate.engine.entities.enemy import EnemyShip
 from pyrate.engine.entities.projectile import Cannonball
 from pyrate.engine.input import handle_input
 from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT
-from pyrate.engine.entities.island import Island
-import time
-from pyrate.engine.entities.bonus import Bonus
-
-
-
 
 
 def sat_mtv(poly1, poly2):
@@ -58,8 +52,6 @@ def sat_mtv(poly1, poly2):
 def distance(a, b):
     return math.hypot(a.x - b.x, a.y - b.y)
 
-def add_uniform_noise(value, noise_range):
-    return value + random.uniform(-noise_range, noise_range) #Adds uniform noise in the range [-noise_range, +noise_range]
 
 def normalize(dx, dy):
     dist = math.hypot(dx, dy)
@@ -73,11 +65,6 @@ class Game:
         player_y = SCREEN_HEIGHT // 2
         self.player_ship = Ship(player_x, player_y)
 
-        self.ships_colliding_with_island = {}
-
-        self.bonuses = []
-        self.last_bonus_time = time.time()
-
         self.projectiles = []
         self.impacts = []
         self.enemies = []
@@ -89,8 +76,6 @@ class Game:
             if math.hypot(x - player_x, y - player_y) >= min_distance:
                 self.enemies.append(EnemyShip(x, y))
             attempts += 1
-        
-        self.sensor_range = 200
 
     def update(self):
         # skip logic if game ended
@@ -100,10 +85,6 @@ class Game:
         handle_input(self.player_ship)
         self.player_ship.update()
         px, py, pa = self.player_ship.x, self.player_ship.y, self.player_ship.angle
-
-        self._maybe_spawn_bonus()
-        self._handle_bonus_collection()
-
 
         # update enemies
         for enemy in self.enemies:
@@ -130,25 +111,6 @@ class Game:
         self._handle_projectile_hits()
         self._handle_ship_collisions()
 
-        for ship in [self.player_ship] + self.enemies:
-            collided = False
-            for island in self.islands:
-                if self.collide(ship, island):
-                    dx = ship.x - island.x
-                    dy = ship.y - island.y  
-                    nx, ny = normalize(dx, dy)
-                    ship.x += nx * 4
-                    ship.y += ny * 4
-
-                    if not self.ships_colliding_with_island.get(ship, False):
-                        ship.apply_damage(0.5)
-                        print(f"{ship.name} hit an island !") 
-                        self.ships_colliding_with_island[ship] = True
-                    collided = True
-                    break
-                if not collided:
-                    self.ships_colliding_with_island[ship] = False
-    
         # end game check
         self._check_end_conditions()
 
@@ -169,9 +131,6 @@ class Game:
                     print(f"{target.name} took {proj.damage} damage, health remaining {target.health}")
                     collisions.append(proj)
                     self.impacts.append((proj, 'hit'))
-                if not target.is_living and isinstance(target, EnemyShip):
-                    self.score += 100
-                    print("Enemy destroyed! +100 points")
         self.projectiles = [p for p in self.projectiles if p not in collisions]
 
     def _handle_ship_collisions(self):
@@ -240,27 +199,3 @@ class Game:
 
     def get_projectile_position(self):
         return [(int(p.x), int(p.y)) for p in self.projectiles]
-
-
-    def update_sensors(self):
-        #Updates the sensors on each boat with uniform noise
-        ships = [self.player_ship] + self.enemies
-        for ship in ships:
-            ship.detected_ships = []
-
-        for ship in ships:
-            for other_ship in ships:
-                if ship is other_ship:
-                    continue
-
-                dist = distance(ship, other_ship)
-                if dist <= self.sensor_range:
-                    ship.detected_ships.append({
-                        "ship": other_ship,
-                        "x": add_uniform_noise(other_ship.x, noise_range=3),
-                        "y": add_uniform_noise(other_ship.y, noise_range=3),
-                        "angle": add_uniform_noise(other_ship.angle, noise_range=5),
-                        "distance": add_uniform_noise(dist, noise_range=2),
-                    })
-
-
