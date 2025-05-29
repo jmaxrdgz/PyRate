@@ -33,12 +33,39 @@ class ProjectileStatus(BaseModel):
     speed: float
     radius: float
 
+class DetectedShip(BaseModel):
+    x: float
+    y: float
+    angle: float
+    distance: float
+    is_living: bool
+
 class Command(BaseModel):
     action: str
     side: str = "left"
 
 class CommandResponse(BaseModel):
     status: str
+
+@app.get("/player/sensors", response_model=List[DetectedShip])
+def get_player_sensors():
+    game.update_sensors()
+    detected = game.player_ship.detected_ships
+
+    result = []
+    for ship_data in detected:
+        result.append(DetectedShip(
+            x=ship_data["x"],
+            y=ship_data["y"],
+            angle=ship_data["angle"],
+            distance=ship_data["distance"],
+            is_living=ship_data["ship"].is_living
+        ))
+
+    print(f">> Player sensors detect {len(result)} ships")
+    return result
+
+
 
 @app.get("/")
 def read_root():
@@ -187,3 +214,4 @@ def handle_input_api(ship: Ship, cmd: Command):
         ship.fire(cmd.side)
     else:
         raise HTTPException(status_code=400, detail="Unknown command")
+    
