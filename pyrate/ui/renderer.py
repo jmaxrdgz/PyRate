@@ -1,7 +1,5 @@
 # pyrate/ui/renderer.py
 import os
-# Use dummy video driver for headless rendering
-os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 import pygame
 import math
 from pyrate.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, DEBUG_MODE

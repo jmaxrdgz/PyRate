@@ -130,8 +130,6 @@ def command_player(player_id: int, cmd: Command):
     else:
         raise HTTPException(400, "Unknown command")
 
-    # immediately step one frame so the command takes effect
-    game.update()
     return CommandResponse(status="ok")
 
 
@@ -166,26 +164,6 @@ def get_projectiles_status():
     return {"projectiles": projectiles_data}
 
 
-@app.post("/game/update")
-def trigger_game_update():
-    game.update()
-    return {"status": "game updated"}
-
-
-@app.get("/game/frame")
-def get_rendered_frame():
-    try:
-        surface = render_frame_to_surface(game)
-        raw_str = pygame.image.tostring(surface, 'RGB')
-        img = Image.frombytes("RGB", surface.get_size(), raw_str)
-        buf = io.BytesIO()
-        img.save(buf, format="JPEG")
-        buf.seek(0)
-        return StreamingResponse(buf, media_type="image/jpeg")
-    except Exception:
-        raise HTTPException(500, "Failed to render frame")
-
-
 @app.get("/video/stream")
 def stream_video():
     def generate():
@@ -200,7 +178,8 @@ def stream_video():
                 b"--frame\r\n"
                 b"Content-Type: image/jpeg\r\n\r\n" + buf.getvalue() + b"\r\n"
             )
-            clock.tick(30)
+            # NOTE: Can be lowered to reduce load on the server
+            clock.tick(30) # Video stream frate rate
     return StreamingResponse(generate(),
         media_type="multipart/x-mixed-replace; boundary=frame")
 

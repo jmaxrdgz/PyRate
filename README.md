@@ -123,15 +123,6 @@ pkill -f dummy_agent.py
 ```
 
 # To-Do
-### Map
-- Add borders
-- Add camera displacement 
-- Add island and forts generation *
-### Gameplay
-- Add UI
-- Add scores & objectives
-- Add bonus drops & ship upgrades 
-- Add multiplayer (Team vs team)
-### API
 - Add sensors (robotic-like : noise, noisy data...) *  
-- Enrich API functionalities
+- Check load on game host (if not enough put visualizer on another port)
+- Prepare demo competition
