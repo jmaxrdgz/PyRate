@@ -1,44 +1,35 @@
+from typing import Literal
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 import io
 from PIL import Image
 from pyrate.ui.renderer import render_frame_to_surface
 from pydantic import BaseModel
-from typing import List
-import math
 import pygame
-import random
-import time
 
 from pyrate.engine.game import Game
-from pyrate.engine.entities.ship import Ship
-from pyrate.engine.entities.projectile import Cannonball
 
 app = FastAPI()
 game = Game()
 
 
+class FireTimestamp(BaseModel):
+    seconds: float
+    nanoseconds: float
+
+
 class ShipStatus(BaseModel):
-    x: float
-    y: float
     angle: float
+    rotation_velocity: float
     speed: float
+    health: float
     is_living: bool
-    projectile_count: int
-
-
-class ProjectileStatus(BaseModel):
-    x: float
-    y: float
-    angle: float
-    speed: float
-    radius: float
+    last_fire_time: FireTimestamp
 
 
 class Command(BaseModel):
     action: str
-    side: str = "left"
-    side: str = "right"
+    side: Literal["left", "right"]
 
 
 class CommandResponse(BaseModel):
@@ -54,42 +45,6 @@ def read_root():
     return {"message": "Welcome to the PyRate API!"}
 
 
-@app.get("/game/status")
-def get_game_status():
-    """
-    Retrieve general game status: all players' positions, number of enemies, and projectile count.
-    """
-    players = [
-        {"id": idx, "x": p.x, "y": p.y, "is_living": p.is_living}
-        for idx, p in enumerate(game.player_ships)
-    ]
-    enemies = [
-        {"id": idx, "x": e.x, "y": e.y, "is_living": e.is_living}
-        for idx, e in enumerate(game.enemy_ships)
-    ]
-    status = {
-        "players": players,
-        "enemies": enemies,
-        "projectile_count": len(game.projectiles),
-    }
-    return status
-
-
-@app.get("/players/status", response_model=List[ShipStatus])
-def get_all_players_status():
-    """
-    Retrieve the status of all player ships.
-    """
-    result = []
-    for p in game.player_ships:
-        result.append(ShipStatus(
-            x=p.x, y=p.y, angle=p.angle, speed=p.speed,
-            is_living=p.is_living,
-            projectile_count=len(p.projectiles)
-        ))
-    return result
-
-
 @app.get("/players/{player_id}/status", response_model=ShipStatus)
 def get_player_status(player_id: int):
     """
@@ -99,11 +54,27 @@ def get_player_status(player_id: int):
         p = game.player_ships[player_id]
     except IndexError:
         raise HTTPException(404, f"No player with id {player_id}")
+    
     return ShipStatus(
-        x=p.x, y=p.y, angle=p.angle, speed=p.speed,
+        angle=p.angle, 
+        rotation_velocity=p.rotation_velocity,
+        speed=p.speed,
+        health=p.health,
         is_living=p.is_living,
-        projectile_count=len(p.projectiles)
+        last_fire_time=p.last_fire_time
     )
+
+
+@app.get("/players/{player_id}/sensor")
+def get_sensor_status(player_id: int):
+    """
+    Retrieve the list of enemy ship statuses.
+    """
+    try:
+        p = game.player_ships[player_id]
+    except IndexError:
+        raise HTTPException(404, f"No player with id {player_id}")
+    return {"nearby_ships": game.get_ship_sensor(p)}
 
 
 @app.post("/players/{player_id}/command", response_model=CommandResponse)
@@ -131,37 +102,6 @@ def command_player(player_id: int, cmd: Command):
         raise HTTPException(400, "Unknown command")
 
     return CommandResponse(status="ok")
-
-
-@app.get("/enemies/status")
-def get_enemies_status():
-    """
-    Retrieve the list of enemy ship statuses.
-    """
-    enemies_data = []
-    for i, enemy in enumerate(game.enemy_ships):
-        enemies_data.append({
-            "id": i,
-            "x": enemy.x,
-            "y": enemy.y,
-            "angle": enemy.angle,
-            "is_living": enemy.is_living,
-        })
-    return {"enemies": enemies_data}
-
-
-@app.get("/projectiles/status")
-def get_projectiles_status():
-    projectiles_data = []
-    for proj in game.projectiles:
-        projectiles_data.append(ProjectileStatus(
-            x=proj.x,
-            y=proj.y,
-            angle=proj.angle,
-            speed=proj.speed,
-            radius=getattr(proj, 'radius', 0)
-        ))
-    return {"projectiles": projectiles_data}
 
 
 @app.get("/video/stream")
