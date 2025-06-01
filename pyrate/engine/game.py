@@ -51,12 +51,26 @@ def sat_mtv(poly1, poly2):
 
 
 def distance(a, b):
+    """ Returns the distance between two entities a and b """
     return math.hypot(a.x - b.x, a.y - b.y)
 
 
 def normalize(dx, dy):
+    """ Returns a normalized vector (dx, dy) """
     dist = math.hypot(dx, dy)
     return (dx / dist, dy / dist) if dist != 0 else (0, 0)
+
+
+def angle(a, b):
+    """ Returns the angle in radians from point a to point b """
+    dx = b.x - a.x
+    dy = b.y - a.y
+    return math.degrees(math.atan2(dy, dx))
+
+
+def add_uniform_noise(value, noise_range):
+        """ Adds noise to a value within a specified range. """
+        return value + random.uniform(-noise_range, noise_range)
 
 
 class Game:
@@ -306,3 +320,56 @@ class Game:
 
     def get_projectile_positions(self):
         return [(int(p.x), int(p.y)) for p in self.projectiles]
+
+    
+    def get_ship_sensor(self, ship):
+        """
+        Returns a sensor reading for the given ship.
+        Includes position, angle, speed, health, living status, and team info.
+        """
+        sensor_data = []
+        for s in self.player_ships + self.enemy_ships:
+            if s is ship:
+                # Optionally skip sensing yourself
+                continue
+
+            # Compute raw distance and angle
+            dist = distance(ship, s)
+            angle_to_ship = angle(ship, s)
+
+            # Determine if 's' is on the same team as 'ship'
+            same_team = False
+            if (ship in self.player_ships and s in self.player_ships) or \
+               (ship in self.enemy_ships and s in self.enemy_ships):
+                same_team = True
+
+            # Set initial entity label
+            if same_team:
+                entity_label = "friendly"
+            else:
+                entity_label = s.name if hasattr(s, "name") else "Unknown"
+
+            # Determine health label
+            health_label = "low" if (hasattr(s, "health") and s.health <= 40) else "high"
+
+            # Add noise based on distance
+            if dist < 200:
+                dist = add_uniform_noise(dist, 20)
+                angle_to_ship = add_uniform_noise(angle_to_ship, 10)
+                # For very close range, keep entity label (including "friendly")
+            elif dist < 400:
+                dist = add_uniform_noise(dist, 50)
+                angle_to_ship = add_uniform_noise(angle_to_ship, 20)
+                # In mid-range, mask entity identity only if it's not friendly
+                if not same_team:
+                    entity_label = "Unknown"
+
+            sensor_data.append({
+                "entity": entity_label,
+                "distance": dist,
+                "angle": angle_to_ship,
+                "is_living": s.is_living,
+                "health": health_label
+            })
+
+        return sensor_data

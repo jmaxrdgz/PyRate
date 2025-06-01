@@ -39,7 +39,6 @@ class Ship(Entity):
         self.temp_damage_boost = False
 
 
-
     def update(self):
         # Apply friction to linear speed
         if self.speed > 0:
@@ -68,8 +67,6 @@ class Ship(Entity):
         # Keep ship within screen bounds
         self.x = max(20, min(self.x, SCREEN_WIDTH - 20))
         self.y = max(20, min(self.y, SCREEN_HEIGHT - 20))
-
-
 
 
     def get_hitbox(self):
@@ -136,10 +133,6 @@ class Ship(Entity):
             self.temp_damage_boost = False
 
         self.projectiles.append(cannonball)
-
-
-
-
 
     def apply_damage(self, amount):
         self.health = max(self.health - amount, 0)
