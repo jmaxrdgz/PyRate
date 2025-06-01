@@ -125,6 +125,27 @@ def _render_frame(screen, clock, game, assets, debug, active_effects):
                 draw_ship(screen, ship, assets.playerB_frames, debug)
             else:
                 raise ValueError("Invalid team value. Expected 'A' or 'B' but got: " + ship.team)
+            
+        if debug:
+            # For each player ship, fetch its sensor readings and draw a small dot
+            for ship in game.player_ships:
+                sensor_data = game.get_ship_sensor(ship)
+                for entry in sensor_data:
+                    # entry["angle"] is in degrees; entry["distance"] is in world‐units
+                    angle_deg = entry["angle"]
+                    dist = entry["distance"]
+                    
+                    # Convert to radians and compute offset from the ship's position
+                    rad = math.radians(angle_deg)
+                    dx = math.cos(rad) * dist
+                    dy = math.sin(rad) * dist
+                    
+                    # Compute absolute screen coordinates
+                    px = ship.x + dx
+                    py = ship.y + dy
+                    
+                    # Draw a small circle (radius=3) in red for each sensed‐point
+                    pygame.draw.circle(screen, (255, 0, 0), (int(px), int(py)), 3)
 
         # Enemies
         for enemy in game.enemy_ships:
