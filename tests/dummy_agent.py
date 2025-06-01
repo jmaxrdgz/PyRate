@@ -16,14 +16,18 @@ def get_player_status():
     resp.raise_for_status()
     return resp.json()
 
-def get_enemies_status():
-    resp = requests.get(f"{API_URL}/enemies/status")
+def get_sensor_status():
+    resp = requests.get(f"{API_URL}/players/{PLAYER_ID}/sensor")
     resp.raise_for_status()
-    return resp.json().get("enemies", [])
+    return resp.json().get("nearby_ships", [])
 
 def send_command(action, side="left"):
     url = f"{API_URL}/players/{PLAYER_ID}/command"
-    payload = {"action": action, "side": side}
+    # Pydantic Command model always requires "side", so we include it even if not firing.
+    if action == "fire":
+        payload = {"action": action, "side": side}
+    else:
+        payload = {"action": action, "side": "left"}
     resp = requests.post(url, json=payload)
     resp.raise_for_status()
     return resp.json()
@@ -35,12 +39,12 @@ def update_game():
 
 def dummy_decision():
     player = get_player_status()
-    enemies = get_enemies_status()
-    px, py, speed = player["x"], player["y"], player["speed"]
+    enemies = get_sensor_status()
+    speed = player["speed"]
 
-    # Tir si ennemi très proche
+    # Tir si un ennemi non-friendly est très proche (< 200)
     for e in enemies:
-        if math.hypot(e["x"] - px, e["y"] - py) < 200:
+        if e["entity"] != "friendly" and e["distance"] < 200:
             return ("fire", random.choice(["left", "right"]))
 
     # Si on est quasiment arrêté, accélère
@@ -48,10 +52,10 @@ def dummy_decision():
         return ("accelerate", None)
 
     # Sinon choix aléatoire :
-    # - 50% accelerate
-    # - 20% tourner (possible car speed>0.1)
-    # - 10% décélérer
-    # - 20% aucun ordre (coasting)
+    #  - 50% accelerate
+    #  - 20% tourner (turn_left ou turn_right)
+    #  - 10% décélérer
+    #  - 20% aucun ordre
     r = random.random()
     if r < 0.5:
         return ("accelerate", None)
@@ -70,13 +74,11 @@ def run():
     while True:
         action, side = dummy_decision()
         if action:
-            if side:
+            if action == "fire":
                 send_command(action, side)
             else:
                 send_command(action)
-        # sinon on lâche les commandes pour la friction
-        # pas de sleep pour ne pas contredire clock.tick(FPS) du serveur
-        # mais on peut ajouter un micro‑délai pour éviter spam trop élevé :
+        # Petite pause pour éviter un spam trop élevé
         time.sleep(0.001)
 
 if __name__ == "__main__":
