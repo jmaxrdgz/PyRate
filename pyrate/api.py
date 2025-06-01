@@ -14,8 +14,8 @@ game = Game()
 
 
 class FireTimestamp(BaseModel):
-    seconds: float
-    nanoseconds: float
+    left: float
+    right: float
 
 
 class ShipStatus(BaseModel):
