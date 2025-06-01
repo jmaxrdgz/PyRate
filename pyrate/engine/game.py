@@ -354,12 +354,12 @@ class Game:
 
             # Add noise based on distance
             if dist < 200:
-                dist = add_uniform_noise(dist, 20)
-                angle_to_ship = add_uniform_noise(angle_to_ship, 10)
+                dist = add_uniform_noise(dist, 10)
+                angle_to_ship = add_uniform_noise(angle_to_ship, 7)
                 # For very close range, keep entity label (including "friendly")
             elif dist < 400:
-                dist = add_uniform_noise(dist, 50)
-                angle_to_ship = add_uniform_noise(angle_to_ship, 20)
+                dist = add_uniform_noise(dist, 25)
+                angle_to_ship = add_uniform_noise(angle_to_ship, 10)
                 # In mid-range, mask entity identity only if it's not friendly
                 if not same_team:
                     entity_label = "Unknown"
