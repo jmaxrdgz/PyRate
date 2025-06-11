@@ -357,12 +357,11 @@ class Game:
                 dist = add_uniform_noise(dist, 10)
                 angle_to_ship = add_uniform_noise(angle_to_ship, 7)
                 # For very close range, keep entity label (including "friendly")
-            elif dist < 400:
+            elif dist < 500:
                 dist = add_uniform_noise(dist, 25)
                 angle_to_ship = add_uniform_noise(angle_to_ship, 10)
                 # In mid-range, mask entity identity only if it's not friendly
-                if not same_team:
-                    entity_label = "Unknown"
+                entity_label = "Unknown"
 
             sensor_data.append({
                 "entity": entity_label,
