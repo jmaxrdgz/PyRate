@@ -1,13 +1,5 @@
 # PyRate
-PyRate is a top-down 2D naval battle game where you command pirate ships in tactical sea skirmishes, built with Python.  
-You are victorious if all enemy ships get destroyed, if the player gets destroyed it's game over.
-  
-### Player
-Spawns in the middle of the map. Can sail forward, turn both direction and slow down but it can't sail backwards. It can shoot it's cannons on both sides, cannons have a 4s cooldown and a maximum range.
-
-### Enemies
-Enemy ships have a patrol zone where they randomly move. If the player enters their aggression zone, they start following it with a parallel trajectory to engage the fight. All ships have collision enabled, collision between the player and an enemy ship result in damage to both ships.  
-
+PyRate is a top-down 2D naval battle simulation game to test and confront autonomous agents via API.
 
 # ⚙️ Installation & Launch
   
@@ -382,8 +374,3 @@ pkill -f "uvicorn pyrate.api:app"
 ```
 pkill -f dummy_agent.py
 ```
-
-# To-Do
-- Add sensors (robotic-like : noise, noisy data...) *  
-- Check load on game host (if not enough put visualizer on another port)
-- Prepare demo competition
