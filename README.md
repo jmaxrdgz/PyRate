@@ -1,7 +1,7 @@
 # PyRate
 PyRate is a top-down 2D naval battle simulation game to test and confront autonomous agents via API.
 
-# ⚙️ Installation & Launch
+# Installation & Launch
   
 ### Clone the repo  
 ```
@@ -29,7 +29,7 @@ Below is an updated **README.md** that reflects the current API endpoints, reque
 
 ---
 
-# 🔌 PyRate HTTP API Usage
+# PyRate HTTP API Usage
 
 PyRate provides an HTTP API for programmatic control of player ships, retrieving game‐state information, and streaming a live MJPEG video.
 
@@ -316,15 +316,15 @@ Content-Type: application/json
    On MacOS, the video stream should open automaticaly.
 
 
-# 🤖 Dummy Agent
+# Dummy Agent
 A simple agent script is included for testing or as a base to create your own.
 
-### 📍 Location
+### Location
 ```
 tests/dummy_agent.py
 ```
   
-### ▶️ Launch the Dummy Agent
+### Launch the Dummy Agent
 On the client machine (where you want to control and view the game):
 ```
 sh client_launcher.sh
@@ -337,7 +337,7 @@ This script will:
 - Randomly chooses one of: accelerate, decelerate, turn_left, turn_right  
 - If an enemy is within 200 units, it prioritizes firing  
   
-# ✏️ Create Your Own Agent
+# Create Your Own Agent
 To write a custom agent:
 
 1. Copy dummy_agent.py and rename it:
@@ -359,7 +359,7 @@ def run_agent():
 python tests/my_agent.py &
 ```
   
-# 🛑 Stop the Server and Client
+# Stop the Server and Client
 To stop everything:
 
 ### Server (on server machine)
